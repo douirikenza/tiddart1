@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../routes/app_routes.dart';
+import './profile_controller.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -22,6 +23,9 @@ class AuthController extends GetxController {
     if (user == null) {
       Get.offAllNamed(AppRoutes.welcome);
     } else {
+      // Charger les données du profil après la connexion
+      final ProfileController profileController = Get.find<ProfileController>();
+      profileController.loadUserData();
       Get.offAllNamed(AppRoutes.mainNavigation);
     }
   }
@@ -62,6 +66,11 @@ class AuthController extends GetxController {
         email: email.trim(),
         password: password.trim(),
       );
+      
+      // Charger les données du profil après la connexion réussie
+      final ProfileController profileController = Get.find<ProfileController>();
+      await profileController.loadUserData();
+      
     } catch (e) {
       Get.snackbar(
         "Erreur de connexion",
@@ -94,6 +103,10 @@ class AuthController extends GetxController {
 
       // Mettre à jour le nom d'affichage
       await result.user!.updateDisplayName(name);
+      
+      // Charger les données du profil après l'inscription réussie
+      final ProfileController profileController = Get.find<ProfileController>();
+      await profileController.loadUserData();
 
     } catch (e) {
       Get.snackbar(
@@ -112,6 +125,9 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       await _auth.signOut();
+      // Réinitialiser les données du profil
+      final ProfileController profileController = Get.find<ProfileController>();
+      profileController.userData.value = null;
     } catch (e) {
       Get.snackbar(
         "Erreur de déconnexion",
