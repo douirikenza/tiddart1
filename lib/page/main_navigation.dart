@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tiddart/page/cart_page.dart';
 import '../theme/app_theme.dart';
-import 'chat_page.dart';
+import 'chat_list_page.dart';
 import 'favorites_page.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
@@ -22,7 +22,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomePage(),
     CartPage(),
     FavoritesPage(),
-    ChatPage(),
+    const ChatListPage(),
     ProfilePage(),
   ];
 

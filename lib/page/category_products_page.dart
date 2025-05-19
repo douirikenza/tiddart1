@@ -1,85 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/product_controller.dart';
-import '../models/product_model.dart';
-import '../theme/app_theme.dart';
+import '../models/product.dart';
 import '../routes/app_routes.dart';
 
 class CategoryProductsPage extends StatelessWidget {
   final String category;
-  final ProductController productController = Get.find<ProductController>();
+  final ProductController productController = Get.put(ProductController());
 
-  CategoryProductsPage({super.key, required this.category});
+  CategoryProductsPage({Key? key, required this.category}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.backgroundLight,
-                AppTheme.surfaceLight,
-              ],
-            ),
-          ),
-        ),
-        iconTheme: IconThemeData(color: AppTheme.primaryBrown),
-        title: ShaderMask(
-          shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-          child: Text(
-            category,
-            style: AppTheme.textTheme.displayMedium?.copyWith(
-              fontSize: 24,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        centerTitle: true,
+        title: Text(category),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.backgroundLight,
-              AppTheme.surfaceLight,
-              AppTheme.backgroundLight.withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: FutureBuilder<List<ProductModel>>(
-          future: productController.getProductsByCategory(category),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: FutureBuilder<void>(
+        future: productController.fetchProducts(categoryId: category),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Erreur lors du chargement des produits',
-                  style: AppTheme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.red,
-                  ),
-                ),
-              );
-            }
-
-            final products = snapshot.data ?? [];
-
-            if (products.isEmpty) {
-              return Center(
+          return Obx(() {
+            if (productController.products.isEmpty) {
+              return const Center(
                 child: Text(
                   'Aucun produit trouvé dans cette catégorie',
-                  style: AppTheme.textTheme.bodyLarge,
+                  style: TextStyle(fontSize: 16),
                 ),
               );
             }
@@ -89,57 +38,55 @@ class CategoryProductsPage extends StatelessWidget {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 0.75,
-                mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
               ),
-              itemCount: products.length,
+              itemCount: productController.products.length,
               itemBuilder: (context, index) {
-                final product = products[index];
+                final product = productController.products[index];
                 return GestureDetector(
                   onTap: () => Get.toNamed(
                     AppRoutes.productDetails,
                     arguments: product,
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryBrown.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  child: Card(
+                    elevation: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Hero(
-                            tag: 'product_${product.name}',
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(15),
-                                ),
-                                image: DecorationImage(
-                                  image: NetworkImage(product.image),
-                                  fit: BoxFit.cover,
-                                ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4),
                               ),
+                              image: product.imageUrls.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(product.imageUrls[0]),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                             ),
+                            child: product.imageUrls.isEmpty
+                                ? const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                : null,
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 product.name,
-                                style: AppTheme.textTheme.titleMedium?.copyWith(
-                                  color: AppTheme.primaryBrown,
+                                style: const TextStyle(
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 2,
@@ -147,12 +94,21 @@ class CategoryProductsPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                product.price,
-                                style: AppTheme.textTheme.titleSmall?.copyWith(
-                                  color: AppTheme.accentGold,
-                                  fontWeight: FontWeight.w600,
+                                '${product.price.toStringAsFixed(2)} €',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              if (!product.isAvailable)
+                                const Text(
+                                  'Non disponible',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -162,8 +118,8 @@ class CategoryProductsPage extends StatelessWidget {
                 );
               },
             );
-          },
-        ),
+          });
+        },
       ),
     );
   }

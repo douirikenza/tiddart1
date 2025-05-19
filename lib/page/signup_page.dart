@@ -142,8 +142,12 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     if (passwordController.text != confirmPasswordController.text) {
       Get.snackbar("Erreur", "Les mots de passe ne correspondent pas",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.shade100,
-          colorText: Colors.brown);
+          backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+          colorText: AppTheme.primaryBrown,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 10,
+          duration: const Duration(seconds: 3),
+          boxShadows: AppTheme.defaultShadow);
       return;
     }
 
@@ -178,8 +182,12 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
       }
       Get.snackbar("Erreur", message,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.shade100,
-          colorText: Colors.brown);
+          backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+          colorText: AppTheme.primaryBrown,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 10,
+          duration: const Duration(seconds: 3),
+          boxShadows: AppTheme.defaultShadow);
     } finally {
       setState(() {
         isLoading = false;
@@ -204,8 +212,12 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
     } catch (e) {
       Get.snackbar("Erreur Google", e.toString(),
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.shade100,
-          colorText: Colors.brown);
+          backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+          colorText: AppTheme.primaryBrown,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 10,
+          duration: const Duration(seconds: 3),
+          boxShadows: AppTheme.defaultShadow);
     }
   }
 

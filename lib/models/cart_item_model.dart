@@ -1,15 +1,18 @@
+import 'product_model.dart';
+
 class CartItem {
-  final String name;
-  final double price;
-  final String image;
+  final ProductModel product;
   int quantity;
 
   CartItem({
-    required this.name,
-    required this.price,
-    required this.image,
+    required this.product,
     this.quantity = 1,
   });
 
-  double get total => price * quantity;
+  double get total => product.getPriceAsDouble() * quantity;
+
+  // Helper method to format total with currency
+  String getFormattedTotal() {
+    return '${total.toStringAsFixed(2)} TND';
+  }
 }

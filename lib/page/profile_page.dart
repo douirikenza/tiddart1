@@ -11,6 +11,7 @@ import '../controllers/auth_controller.dart';
 import '../models/product_model.dart';
 import '../routes/app_routes.dart';
 import 'chat_page.dart';
+import 'chat_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -528,11 +529,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Get.to(() => const ChatPage());
+                          Get.to(() => const ChatListPage());
                         },
                         icon: const Icon(Icons.chat_bubble_outline, size: 24),
                         label: Text(
-                          'Contacter un artisan',
+                          'Messages',
                           style: AppTheme.textTheme.bodyLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

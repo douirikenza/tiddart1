@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../controllers/auth_controller.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 
@@ -14,8 +14,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  bool isLoading = false;
+  final AuthController _authController = Get.find<AuthController>();
   bool _obscurePassword = true;
 
   late AnimationController _fadeController;
@@ -63,26 +62,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Future<void> _signIn() async {
     if (!_validateInputs()) return;
 
-    setState(() => isLoading = true);
-
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      await _authController.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
       );
-      Get.offNamed(AppRoutes.mainNavigation);
-    } on FirebaseAuthException catch (e) {
-      String errorMsg = 'Une erreur est survenue';
-      if (e.code == 'user-not-found') {
-        errorMsg = 'Aucun compte trouvé avec cet email';
-      } else if (e.code == 'wrong-password') {
-        errorMsg = 'Mot de passe incorrect';
-      } else if (e.code == 'invalid-email') {
-        errorMsg = 'Format d\'email invalide';
-      }
-      _showError(errorMsg);
-    } finally {
-      setState(() => isLoading = false);
+    } catch (e) {
+      _showError('Une erreur est survenue lors de la connexion');
     }
   }
 
@@ -103,11 +89,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       'Erreur',
       message,
       snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.red.shade100,
-      colorText: Colors.red.shade900,
+      backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+      colorText: AppTheme.primaryBrown,
       margin: const EdgeInsets.all(16),
       borderRadius: 10,
       duration: const Duration(seconds: 3),
+      boxShadows: AppTheme.defaultShadow,
     );
   }
 
@@ -115,160 +102,243 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.backgroundLight,
-              AppTheme.surfaceLight,
-              AppTheme.backgroundLight.withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: Icon(Icons.arrow_back_ios, color: AppTheme.primaryBrown),
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppTheme.surfaceLight,
-                        padding: const EdgeInsets.all(12),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    ShaderMask(
-                      shaderCallback: (bounds) => AppTheme.primaryGradient.createShader(bounds),
-                      child: Text(
-                        'Connexion',
-                        style: AppTheme.textTheme.displayLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Bienvenue ! Connectez-vous pour découvrir notre artisanat',
-                      style: AppTheme.textTheme.bodyLarge?.copyWith(
-                        color: AppTheme.textDark.withOpacity(0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: AppTheme.textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryBrown),
-                        labelStyle: TextStyle(color: AppTheme.primaryBrown),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: _obscurePassword,
-                      style: AppTheme.textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'Mot de passe',
-                        prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primaryBrown),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                            color: AppTheme.primaryBrown,
-                          ),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        labelStyle: TextStyle(color: AppTheme.primaryBrown),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => Get.toNamed(AppRoutes.pswdOubliePage),
-                        child: Text(
-                          'Mot de passe oublié ?',
-                          style: AppTheme.textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.primaryBrown,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _signIn,
-                        style: AppTheme.primaryButtonStyle,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Se connecter',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    letterSpacing: 0.5,
-                                  ),
+      body: Obx(() => Stack(
+        children: [
+          SingleChildScrollView(
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.backgroundLight,
+                    AppTheme.surfaceLight,
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 40),
+                          // Logo ou Image
+                          Container(
+                            height: 120,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.surfaceLight,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryBrown.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
                                 ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(color: AppTheme.primaryBrown.withOpacity(0.3)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'Ou',
-                            style: AppTheme.textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.primaryBrown.withOpacity(0.7),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 60,
+                              color: AppTheme.primaryBrown,
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Divider(color: AppTheme.primaryBrown.withOpacity(0.3)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Get.toNamed(AppRoutes.signup),
-                        style: AppTheme.secondaryButtonStyle,
-                        child: const Text(
-                          'Créer un compte',
-                          style: TextStyle(fontSize: 18, letterSpacing: 0.5),
-                        ),
+                          const SizedBox(height: 40),
+                          // Titre
+                          ShaderMask(
+                            shaderCallback: (bounds) =>
+                                AppTheme.primaryGradient.createShader(bounds),
+                            child: Text(
+                              'Bienvenue',
+                              style: AppTheme.textTheme.displayLarge?.copyWith(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Connectez-vous pour découvrir notre artisanat',
+                            style: AppTheme.textTheme.bodyLarge?.copyWith(
+                              color: AppTheme.textDark.withOpacity(0.7),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 48),
+                          // Champs de formulaire
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceLight,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryBrown.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: emailController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Email',
+                                    labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                                    prefixIcon: Icon(Icons.email, color: AppTheme.primaryBrown),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: passwordController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Mot de passe',
+                                    labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                                    prefixIcon: Icon(Icons.lock, color: AppTheme.primaryBrown),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                        color: AppTheme.primaryBrown,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                                    ),
+                                  ),
+                                  obscureText: _obscurePassword,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Bouton de connexion
+                          ElevatedButton(
+                            onPressed: _authController.isLoading.value ? null : _signIn,
+                            style: AppTheme.primaryButtonStyle,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: _authController.isLoading.value
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Se connecter',
+                                      style: AppTheme.textTheme.titleLarge?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Liens supplémentaires
+                          TextButton(
+                            onPressed: () => Get.toNamed(AppRoutes.pswdOubliePage),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.primaryBrown,
+                            ),
+                            child: Text(
+                              'Mot de passe oublié ?',
+                              style: AppTheme.textTheme.titleMedium,
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Pas encore de compte ?',
+                                style: AppTheme.textTheme.bodyLarge?.copyWith(
+                                  color: AppTheme.textDark.withOpacity(0.7),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => Get.toNamed(AppRoutes.signup),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryBrown,
+                                ),
+                                child: Text(
+                                  'Créer un compte',
+                                  style: AppTheme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+          if (_authController.isLoading.value)
+            Container(
+              color: Colors.black12,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceLight,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryBrown.withOpacity(0.2),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBrown),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      )),
     );
   }
 }

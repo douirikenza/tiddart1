@@ -91,7 +91,7 @@ class FavoritesPage extends StatelessWidget {
                               top: 8,
                               right: 8,
                               child: GestureDetector(
-                                onTap: () => favoritesController.removeFromFavorites(product.id),
+                                onTap: () => favoritesController.removeFromFavorites(product),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(

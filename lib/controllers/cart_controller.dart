@@ -7,7 +7,7 @@ class CartController extends GetxController {
 
   // Ajouter un produit au panier
   void addToCart(CartItem item) {
-    final index = cartItems.indexWhere((e) => e.name == item.name);
+    final index = cartItems.indexWhere((e) => e.product.name == item.product.name);
     if (index != -1) {
       cartItems[index].quantity += item.quantity;
     } else {
@@ -17,10 +17,10 @@ class CartController extends GetxController {
 
   // Supprimer un produit du panier
   void removeFromCart(CartItem item) {
-    cartItems.removeWhere((e) => e.name == item.name);
+    cartItems.removeWhere((e) => e.product.name == item.product.name);
   }
 
-  // Changer la quantité d’un produit
+  // Changer la quantité d'un produit
   void changeQuantity(int index, int delta) {
     final current = cartItems[index];
     current.quantity += delta;
@@ -33,4 +33,9 @@ class CartController extends GetxController {
 
   // Calculer le total du panier
   double get total => cartItems.fold(0, (sum, item) => sum + item.total);
+
+  // Vider le panier
+  void clearCart() {
+    cartItems.clear();
+  }
 }

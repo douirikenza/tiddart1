@@ -80,11 +80,12 @@ class _PswdOubliePageState extends State<PswdOubliePage>
         'Erreur',
         'Veuillez entrer votre adresse e-mail',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
+        backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+        colorText: AppTheme.primaryBrown,
         margin: const EdgeInsets.all(16),
         borderRadius: 10,
         duration: const Duration(seconds: 3),
+        boxShadows: AppTheme.defaultShadow,
       );
       return;
     }
@@ -97,11 +98,12 @@ class _PswdOubliePageState extends State<PswdOubliePage>
         'Succès',
         'Un e-mail de réinitialisation a été envoyé à votre adresse',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green.shade100,
-        colorText: Colors.green.shade900,
+        backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+        colorText: AppTheme.primaryBrown,
         margin: const EdgeInsets.all(16),
         borderRadius: 10,
         duration: const Duration(seconds: 3),
+        boxShadows: AppTheme.defaultShadow,
       );
       Get.offNamed(AppRoutes.validCodePage);
     } on FirebaseAuthException catch (e) {
@@ -113,11 +115,12 @@ class _PswdOubliePageState extends State<PswdOubliePage>
         'Erreur',
         message,
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
+        backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+        colorText: AppTheme.primaryBrown,
         margin: const EdgeInsets.all(16),
         borderRadius: 10,
         duration: const Duration(seconds: 3),
+        boxShadows: AppTheme.defaultShadow,
       );
     } finally {
       if (mounted) setState(() => isLoading = false);

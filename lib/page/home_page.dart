@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import 'product_details_page.dart';
 import 'promotions_page.dart';
 import 'favorites_page.dart'; // ✅ Corrigé ici
+import '../controllers/cart_controller.dart';
+import '../models/cart_item_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -424,89 +426,117 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: AppTheme.defaultShadow,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Stack(
                       children: [
-                          Stack(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
+                              child: Image.network(
+                                product.image,
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    product.name,
+                                    style: AppTheme.textTheme.titleMedium?.copyWith(
+                                      color: AppTheme.primaryBrown,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    product.price,
+                                    style: AppTheme.textTheme.titleMedium?.copyWith(
+                                      color: AppTheme.accentGold,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Row(
                             children: [
-                              Container(
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      AppTheme.primaryBrown.withOpacity(0.1),
-                                      AppTheme.surfaceLight,
-                                    ],
+                              Material(
+                                color: AppTheme.primaryBrown.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(30),
+                                child: InkWell(
+                                  onTap: () {
+                                    final cartController = Get.find<CartController>();
+                                    cartController.addToCart(
+                                      CartItem(
+                                        product: product,
+                                        quantity: 1,
+                                      ),
+                                    );
+                                    Get.snackbar(
+                                      'Ajouté au panier',
+                                      '${product.name} a été ajouté avec succès.',
+                                      backgroundColor: AppTheme.surfaceLight.withOpacity(0.95),
+                                      colorText: AppTheme.primaryBrown,
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      margin: const EdgeInsets.all(16),
+                                      borderRadius: 10,
+                                      duration: const Duration(seconds: 3),
+                                      boxShadows: AppTheme.defaultShadow,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(8),
+                                    child: Icon(
+                                      Icons.shopping_cart_outlined,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
                                   ),
                                 ),
-                                child: Center(
-                                  child: Image.asset(product.image, height: 90),
-                                ),
                               ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: GestureDetector(
+                              const SizedBox(width: 8),
+                              Material(
+                                color: AppTheme.primaryBrown.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(30),
+                                child: InkWell(
                                   onTap: () {
-                                    final isFavori = favoritesController.favorites.any((p) => p.id == product.id);
-                                    if (isFavori) {
-                                      favoritesController.removeFromFavorites(product.id);
+                                    if (favoritesController.isFavorite(product)) {
+                                      favoritesController.removeFromFavorites(product);
                                     } else {
                                       favoritesController.addToFavorites(product);
                                     }
                                   },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceLight,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Obx(() {
-                                      final isFavori = favoritesController.favorites.any((p) => p.id == product.id);
-                                      return Icon(
-                                        isFavori ? Icons.favorite : Icons.favorite_border,
-                                        color: isFavori ? Colors.red : AppTheme.primaryBrown,
-                                        size: 20,
-                                      );
-                                    }),
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Obx(() => Icon(
+                                      favoritesController.isFavorite(product)
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: favoritesController.isFavorite(product)
+                                          ? Colors.red
+                                          : Colors.white,
+                                      size: 20,
+                                    )),
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                        Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                            product.name,
-                                  style: AppTheme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                        ),
-                                const SizedBox(height: 4),
-                                Text(
-                            product.price,
-                                  style: TextStyle(
-                                    color: AppTheme.accentGold,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                            ),
-                              ],
                           ),
                         ),
                       ],

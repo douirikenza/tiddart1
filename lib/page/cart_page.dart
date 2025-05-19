@@ -217,17 +217,17 @@ class CartPage extends StatelessWidget {
       child: Row(
         children: [
           Hero(
-            tag: 'product_${item.name}',
+            tag: 'product_${item.product.name}',
             child: ClipRRect(
-            borderRadius: const BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 bottomLeft: Radius.circular(20),
-            ),
-            child: Image.asset(
-              item.image,
+              ),
+              child: Image.asset(
+                item.product.image,
                 height: 110,
                 width: 110,
-              fit: BoxFit.cover,
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -239,7 +239,7 @@ class CartPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.name,
+                    item.product.name,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Playfair Display',
@@ -324,7 +324,7 @@ class CartPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${item.total.toStringAsFixed(2)} TND',
+                        item.getFormattedTotal(),
                         style: TextStyle(
                           fontFamily: 'Playfair Display',
                           fontWeight: FontWeight.w600,

@@ -19,14 +19,21 @@ class AuthController extends GetxController {
     ever(firebaseUser, _setInitialScreen);
   }
 
-  void _setInitialScreen(User? user) {
+  void _setInitialScreen(User? user) async {
     if (user == null) {
       Get.offAllNamed(AppRoutes.welcome);
     } else {
       // Charger les données du profil après la connexion
       final ProfileController profileController = Get.find<ProfileController>();
-      profileController.loadUserData();
-      Get.offAllNamed(AppRoutes.mainNavigation);
+      await profileController.loadUserData();
+      
+      // Vérifier le rôle de l'utilisateur
+      bool isUserArtisan = await isArtisan();
+      if (isUserArtisan) {
+        Get.offAllNamed(AppRoutes.artisanDashboard, arguments: user.uid);
+      } else {
+        Get.offAllNamed(AppRoutes.mainNavigation);
+      }
     }
   }
 
@@ -67,9 +74,7 @@ class AuthController extends GetxController {
         password: password.trim(),
       );
       
-      // Charger les données du profil après la connexion réussie
-      final ProfileController profileController = Get.find<ProfileController>();
-      await profileController.loadUserData();
+      // La redirection sera gérée par _setInitialScreen
       
     } catch (e) {
       Get.snackbar(

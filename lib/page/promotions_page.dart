@@ -234,9 +234,8 @@ class PromotionsPage extends StatelessWidget {
                                     right: 12,
                                     child: GestureDetector(
                                       onTap: () {
-                                        final isFavori = favoritesController.favorites.any((p) => p.id == product.id);
-                                        if (isFavori) {
-                                          favoritesController.removeFromFavorites(product.id);
+                                        if (favoritesController.isFavorite(product)) {
+                                          favoritesController.removeFromFavorites(product);
                                         } else {
                                           favoritesController.addToFavorites(product);
                                         }
