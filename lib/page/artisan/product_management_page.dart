@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import '../../controllers/product_controller.dart';
 import '../../controllers/category_controller.dart';
@@ -206,7 +208,7 @@ class ProductManagementPage extends StatelessWidget {
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
     String? selectedCategoryId;
-    final RxList<File> selectedImages = <File>[].obs;
+    final RxList<dynamic> selectedImages = <dynamic>[].obs;
 
     showDialog(
       context: context,
@@ -423,7 +425,9 @@ class ProductManagementPage extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(8),
                                           image: DecorationImage(
-                                            image: FileImage(selectedImages[index]),
+                                            image: kIsWeb
+                                                ? MemoryImage(selectedImages[index] as Uint8List)
+                                                : FileImage(selectedImages[index] as File) as ImageProvider,
                                             fit: BoxFit.cover,
                                           ),
                                           boxShadow: [
@@ -494,7 +498,7 @@ class ProductManagementPage extends StatelessWidget {
                         onPressed: () async {
                           await imageService.showImagePickerDialog(
                             context,
-                            (File image) {
+                            (dynamic image) {
                               selectedImages.add(image);
                             },
                           );

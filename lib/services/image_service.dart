@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as path;
@@ -11,7 +13,7 @@ class ImageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final uuid = const Uuid();
 
-  Future<File?> pickImage(ImageSource source) async {
+  Future<dynamic> pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -20,7 +22,13 @@ class ImageService {
         imageQuality: 85,
       );
       if (image == null) return null;
-      return File(image.path);
+      
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        return bytes;
+      } else {
+        return File(image.path);
+      }
     } catch (e) {
       debugPrint('Erreur lors de la sélection de l\'image: $e');
       Get.snackbar(
@@ -34,24 +42,35 @@ class ImageService {
     }
   }
 
-  Future<String?> uploadImage(File imageFile, String folder) async {
+  Future<String?> uploadImage(dynamic imageData, String folder) async {
     try {
-      // Vérifier la taille de l'image (max 5MB)
-      final fileSize = await imageFile.length();
-      if (fileSize > 5 * 1024 * 1024) {
-        throw Exception('L\'image est trop volumineuse (max 5MB)');
-      }
-
-      String fileName = '${uuid.v4()}${path.extension(imageFile.path)}';
+      String fileName = '${uuid.v4()}.jpg';
       final storageRef = _storage.ref().child('$folder/$fileName');
       
-      final uploadTask = storageRef.putFile(
-        imageFile,
-        SettableMetadata(
-          contentType: 'image/${path.extension(imageFile.path).substring(1)}',
-          customMetadata: {'picked-file-path': imageFile.path},
-        ),
-      );
+      UploadTask uploadTask;
+      if (kIsWeb) {
+        final Uint8List bytes = imageData as Uint8List;
+        if (bytes.length > 5 * 1024 * 1024) {
+          throw Exception('L\'image est trop volumineuse (max 5MB)');
+        }
+        uploadTask = storageRef.putData(
+          bytes,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+      } else {
+        final File imageFile = imageData as File;
+        final fileSize = await imageFile.length();
+        if (fileSize > 5 * 1024 * 1024) {
+          throw Exception('L\'image est trop volumineuse (max 5MB)');
+        }
+        uploadTask = storageRef.putFile(
+          imageFile,
+          SettableMetadata(
+            contentType: 'image/${path.extension(imageFile.path).substring(1)}',
+            customMetadata: {'picked-file-path': imageFile.path},
+          ),
+        );
+      }
 
       // Gérer les erreurs pendant le téléchargement
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
@@ -104,7 +123,7 @@ class ImageService {
     }
   }
 
-  Future<void> showImagePickerDialog(BuildContext context, Function(File) onImageSelected) async {
+  Future<void> showImagePickerDialog(BuildContext context, Function(dynamic) onImageSelected) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -132,7 +151,7 @@ class ImageService {
                 subtitle: const Text('Utiliser l\'appareil photo'),
                 onTap: () async {
                   Navigator.pop(context);
-                  final File? image = await pickImage(ImageSource.camera);
+                  final image = await pickImage(ImageSource.camera);
                   if (image != null) {
                     onImageSelected(image);
                   }
@@ -152,7 +171,7 @@ class ImageService {
                 subtitle: const Text('Sélectionner une image existante'),
                 onTap: () async {
                   Navigator.pop(context);
-                  final File? image = await pickImage(ImageSource.gallery);
+                  final image = await pickImage(ImageSource.gallery);
                   if (image != null) {
                     onImageSelected(image);
                   }

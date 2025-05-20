@@ -28,13 +28,13 @@ class CategoryController extends GetxController {
     }
   }
 
-  Future<void> addCategory(String name, String description, String imageUrl) async {
+  Future<void> addCategory(String name, String description, String? imageUrl) async {
     try {
       isLoading.value = true;
       final docRef = await _firestore.collection('categories').add({
-        'name': name,
+        'nom': name,
         'description': description,
-        'imageUrl': imageUrl,
+        'image': imageUrl,
         'createdAt': DateTime.now().toIso8601String(),
       });
 
@@ -42,10 +42,10 @@ class CategoryController extends GetxController {
         id: docRef.id,
         name: name,
         description: description,
-        imageUrl: imageUrl,
+        imageUrl: "test",
         createdAt: DateTime.now(),
       );
-
+       print('category data: ${newCategory.toJson()}');
       categories.add(newCategory);
       Get.snackbar('Succès', 'Catégorie ajoutée avec succès');
     } catch (e) {

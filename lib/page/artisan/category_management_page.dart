@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import '../../controllers/category_controller.dart';
 import '../../models/category.dart';
@@ -170,7 +172,7 @@ class CategoryManagementPage extends StatelessWidget {
   void _showAddCategoryDialog(BuildContext context) {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
-    final Rx<File?> selectedImage = Rx<File?>(null);
+    final Rx<dynamic> selectedImage = Rx<dynamic>(null);
 
     showDialog(
       context: context,
@@ -254,7 +256,9 @@ class CategoryManagementPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             image: DecorationImage(
-                              image: FileImage(selectedImage.value!),
+                              image: kIsWeb
+                                  ? MemoryImage(selectedImage.value as Uint8List)
+                                  : FileImage(selectedImage.value as File) as ImageProvider,
                               fit: BoxFit.cover,
                             ),
                             boxShadow: [
@@ -319,7 +323,7 @@ class CategoryManagementPage extends StatelessWidget {
                   onPressed: () async {
                     await imageService.showImagePickerDialog(
                       context,
-                      (File image) {
+                      (dynamic image) {
                         selectedImage.value = image;
                       },
                     );
@@ -358,6 +362,7 @@ class CategoryManagementPage extends StatelessWidget {
                       if (nameController.text.isEmpty) {
                         Get.snackbar(
                           'Attention',
+
                           'Le nom de la catégorie est obligatoire',
                           backgroundColor: Colors.orange.shade100,
                           colorText: Colors.orange.shade900,
@@ -366,7 +371,7 @@ class CategoryManagementPage extends StatelessWidget {
                         return;
                       }
 
-                      if (selectedImage.value == null) {
+                /*      if (selectedImage.value == null) {
                         Get.snackbar(
                           'Attention',
                           'Veuillez sélectionner une image pour la catégorie',
@@ -375,9 +380,9 @@ class CategoryManagementPage extends StatelessWidget {
                           snackPosition: SnackPosition.TOP,
                         );
                         return;
-                      }
+                      }*/
 
-                      try {
+                    /*  try {
                         // Afficher un indicateur de chargement
                         final loadingOverlay = LoadingOverlay.show(
                           context,
@@ -421,7 +426,7 @@ class CategoryManagementPage extends StatelessWidget {
                           snackPosition: SnackPosition.TOP,
                           duration: const Duration(seconds: 5),
                         );
-                      }
+                      }*/
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBrown,
@@ -484,7 +489,7 @@ class CategoryCard extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(category.imageUrl),
+                      image: NetworkImage(category.imageUrl ??""),
                       fit: BoxFit.cover,
                     ),
                   ),

@@ -176,12 +176,12 @@ class _CartPaymentPageState extends State<CartPaymentPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                '${item.name} x${item.quantity}',
+                                '${item.product.name} x${item.quantity}',
                                 style: AppTheme.textTheme.bodyLarge,
                               ),
                             ),
                             Text(
-                              '${(item.price * item.quantity).toStringAsFixed(2)} TND',
+                              '${(item.product.getPriceAsDouble() * item.quantity).toStringAsFixed(2)} TND',
                               style: AppTheme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),

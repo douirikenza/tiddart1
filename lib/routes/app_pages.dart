@@ -29,9 +29,17 @@ class AppPages {
       name: AppRoutes.orderStatistics,
       page: () => OrderStatisticsPage(),
     ),
-    GetPage(
-      name: AppRoutes.artisanChat,
-      page: () => ArtisanChatPage(artisanId: Get.arguments),
-    ),
+   GetPage(
+  name: AppRoutes.artisanChat,
+  page: () {
+    final args = Get.arguments as Map<String, dynamic>;
+    return ArtisanChatPage(
+      artisanId: args['artisanId'],
+      clientId: args['clientId'],
+      clientName: args['clientName'],
+    );
+  },
+),
+
   ];
 } 

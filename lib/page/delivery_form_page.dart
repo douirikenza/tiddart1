@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_map/flutter_map.dart' as fmap;
+import 'package:latlong2/latlong.dart' as latlng;
+import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../theme/app_theme.dart';
 import '../models/product_model.dart';
 
@@ -25,8 +31,8 @@ class _DeliveryFormPageState extends State<DeliveryFormPage> {
   
   final double _deliveryFee = 7.0;
   bool _isLocationSelected = false;
-  LatLng? _selectedLocation;
-  final LatLng _initialPosition = const LatLng(34.0209, -6.8416); // Rabat, Maroc
+  gmaps.LatLng? _selectedLocation;
+  final gmaps.LatLng _initialPosition = const gmaps.LatLng(34.0209, -6.8416); // Rabat, Maroc
 
   @override
   void dispose() {
@@ -88,7 +94,7 @@ class _DeliveryFormPageState extends State<DeliveryFormPage> {
   void _showLocationPicker() async {
     try {
       final Position position = await _determinePosition();
-      final currentLocation = LatLng(position.latitude, position.longitude);
+      final currentLocation = gmaps.LatLng(position.latitude, position.longitude);
       
       showModalBottomSheet(
         context: context,
@@ -152,95 +158,98 @@ class _DeliveryFormPageState extends State<DeliveryFormPage> {
                 ),
               ),
               Expanded(
-                child: Stack(
-                  children: [
-                    GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: currentLocation,
-                        zoom: 15,
-                      ),
-                      onTap: (LatLng location) {
-                        setState(() {
-                          _selectedLocation = location;
-                        });
-                      },
-                      markers: _selectedLocation != null
-                          ? {
-                              Marker(
-                                markerId: const MarkerId('selected_location'),
-                                position: _selectedLocation!,
-                                icon: BitmapDescriptor.defaultMarkerWithHue(
-                                  BitmapDescriptor.hueOrange,
+                child: kIsWeb
+                    ? _buildWebMap(currentLocation)
+                    : Stack(
+                        children: [
+                          gmaps.GoogleMap(
+                            initialCameraPosition: gmaps.CameraPosition(
+                              target: currentLocation,
+                              zoom: 15,
+                            ),
+                            onTap: (gmaps.LatLng location) {
+                              setState(() {
+                                _selectedLocation = location;
+                              });
+                              _updateAddressFromLatLng(location.latitude, location.longitude);
+                            },
+                            markers: _selectedLocation != null
+                                ? {
+                                    gmaps.Marker(
+                                      markerId: const gmaps.MarkerId('selected_location'),
+                                      position: _selectedLocation!,
+                                      icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
+                                        gmaps.BitmapDescriptor.hueOrange,
+                                      ),
+                                    ),
+                                  }
+                                : {},
+                            myLocationEnabled: true,
+                            myLocationButtonEnabled: true,
+                            zoomControlsEnabled: true,
+                            mapType: gmaps.MapType.normal,
+                          ),
+                          Positioned(
+                            bottom: 20,
+                            left: 20,
+                            right: 20,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_selectedLocation != null) {
+                                  setState(() {
+                                    _isLocationSelected = true;
+                                  });
+                                  Navigator.pop(context);
+                                } else {
+                                  Get.snackbar(
+                                    'Attention',
+                                    'Veuillez sélectionner un point sur la carte',
+                                    backgroundColor: AppTheme.surfaceLight,
+                                    colorText: AppTheme.primaryBrown,
+                                    snackPosition: SnackPosition.TOP,
+                                    margin: const EdgeInsets.all(16),
+                                    borderRadius: 10,
+                                    duration: const Duration(seconds: 2),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryBrown,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 16,
                                 ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                elevation: 2,
+                              ).copyWith(
+                                backgroundColor: MaterialStateProperty.resolveWith((states) {
+                                  if (states.contains(MaterialState.pressed)) {
+                                    return AppTheme.primaryBrown.withOpacity(0.9);
+                                  }
+                                  return AppTheme.primaryBrown;
+                                }),
                               ),
-                            }
-                          : {},
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: true,
-                      zoomControlsEnabled: true,
-                      mapType: MapType.normal,
-                    ),
-                    Positioned(
-                      bottom: 20,
-                      left: 20,
-                      right: 20,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_selectedLocation != null) {
-                            setState(() {
-                              _isLocationSelected = true;
-                            });
-                            Navigator.pop(context);
-                          } else {
-                            Get.snackbar(
-                              'Attention',
-                              'Veuillez sélectionner un point sur la carte',
-                              backgroundColor: AppTheme.surfaceLight,
-                              colorText: AppTheme.primaryBrown,
-                              snackPosition: SnackPosition.TOP,
-                              margin: const EdgeInsets.all(16),
-                              borderRadius: 10,
-                              duration: const Duration(seconds: 2),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryBrown,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 2,
-                        ).copyWith(
-                          backgroundColor: MaterialStateProperty.resolveWith((states) {
-                            if (states.contains(MaterialState.pressed)) {
-                              return AppTheme.primaryBrown.withOpacity(0.9);
-                            }
-                            return AppTheme.primaryBrown;
-                          }),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.check_circle_outline),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Confirmer la localisation',
-                              style: AppTheme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.check_circle_outline),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Confirmer la localisation',
+                                    style: AppTheme.textTheme.titleMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -258,6 +267,110 @@ class _DeliveryFormPageState extends State<DeliveryFormPage> {
         duration: const Duration(seconds: 3),
       );
     }
+  }
+
+  Widget _buildWebMap(gmaps.LatLng currentLocation) {
+    latlng.LatLng? webSelectedLocation = _selectedLocation != null
+        ? latlng.LatLng(_selectedLocation!.latitude, _selectedLocation!.longitude)
+        : null;
+    final mapController = fmap.MapController();
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Stack(
+          children: [
+            fmap.FlutterMap(
+              mapController: mapController,
+              options: fmap.MapOptions(
+                initialCenter: webSelectedLocation ?? latlng.LatLng(currentLocation.latitude, currentLocation.longitude),
+                initialZoom: 13.0,
+                onTap: (tapPosition, point) {
+                  setState(() {
+                    webSelectedLocation = point;
+                    _selectedLocation = gmaps.LatLng(point.latitude, point.longitude);
+                  });
+                  _updateAddressFromLatLng(point.latitude, point.longitude);
+                },
+              ),
+              children: [
+                fmap.TileLayer(
+                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  subdomains: ['a', 'b', 'c'],
+                  userAgentPackageName: 'com.example.app',
+                ),
+                if (webSelectedLocation != null)
+                  fmap.MarkerLayer(
+                    markers: [
+                      fmap.Marker(
+                        width: 40.0,
+                        height: 40.0,
+                        point: webSelectedLocation!,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (webSelectedLocation != null) {
+                    setState(() {
+                      _isLocationSelected = true;
+                    });
+                    Navigator.pop(context);
+                  } else {
+                    Get.snackbar(
+                      'Attention',
+                      'Veuillez sélectionner un point sur la carte',
+                      backgroundColor: AppTheme.surfaceLight,
+                      colorText: AppTheme.primaryBrown,
+                      snackPosition: SnackPosition.TOP,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 10,
+                      duration: const Duration(seconds: 2),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBrown,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 2,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Confirmer la localisation',
+                      style: AppTheme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -788,5 +901,72 @@ class _DeliveryFormPageState extends State<DeliveryFormPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _updateAddressFromLatLng(double lat, double lng) async {
+    try {
+      if (kIsWeb) {
+        // Utilise Nominatim (OpenStreetMap) sur le web
+        final url = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lng&accept-language=fr');
+        final response = await http.get(url, headers: {
+          'User-Agent': 'FlutterApp/1.0 (your@email.com)'
+        });
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final address = data['address'] ?? {};
+          setState(() {
+            _addressController.text = [
+              address['road'],
+              address['suburb'],
+              address['neighbourhood'],
+              address['village'],
+              address['town'],
+              address['state_district']
+            ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+            _cityController.text = address['city'] ?? address['town'] ?? address['village'] ?? address['state'] ?? '';
+          });
+        } else {
+          Get.snackbar(
+            'Erreur',
+            'Impossible de récupérer l’adresse (Nominatim)',
+            backgroundColor: Colors.red.shade100,
+            colorText: Colors.red.shade900,
+          );
+        }
+      } else {
+        // Utilise geocoding sur mobile
+        final placemarks = await geocoding.placemarkFromCoordinates(lat, lng);
+        print('Placemarks: $placemarks');
+        if (placemarks.isNotEmpty) {
+          final placemark = placemarks.first;
+          setState(() {
+            _addressController.text = [
+              placemark.street,
+              placemark.subLocality,
+              placemark.subAdministrativeArea
+            ].where((e) => e != null && e.isNotEmpty).join(', ');
+            _cityController.text = placemark.locality ?? placemark.administrativeArea ?? '';
+          });
+        } else {
+          Get.snackbar(
+            'Adresse introuvable',
+            'Aucune adresse n’a été trouvée pour ce point.',
+            backgroundColor: Colors.red.shade100,
+            colorText: Colors.red.shade900,
+          );
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Impossible de récupérer l’adresse : $e',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+      setState(() {
+        _addressController.text = '';
+        _cityController.text = '';
+      });
+    }
   }
 } 
