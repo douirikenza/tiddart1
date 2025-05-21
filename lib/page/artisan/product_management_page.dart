@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
@@ -10,12 +11,23 @@ import '../../models/category.dart';
 import '../../services/image_service.dart';
 import '../../theme/app_theme.dart';
 
-class ProductManagementPage extends StatelessWidget {
-  final ProductController productController = Get.put(ProductController());
+class ProductManagementPage extends StatefulWidget {
+  ProductManagementPage({Key? key}) : super(key: key);
+
+  @override
+  State<ProductManagementPage> createState() => _ProductManagementPageState();
+}
+
+class _ProductManagementPageState extends State<ProductManagementPage> {
+  final ProductController productController = Get.find<ProductController>();
   final CategoryController categoryController = Get.put(CategoryController());
   final ImageService imageService = ImageService();
 
-  ProductManagementPage({Key? key}) : super(key: key);
+  @override
+  void initState() {
+    super.initState();
+    productController.fetchProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -176,10 +188,10 @@ class ProductManagementPage extends StatelessWidget {
                 }
                 final category = categoryController.categories[index - 1];
                 return _buildFilterTile(
-                  category.name,
+                  category.nom,
                   Icons.folder,
                   () {
-                    productController.fetchProducts(categoryId: category.id);
+                    productController.fetchProducts();
                     Get.back();
                   },
                 );
@@ -364,7 +376,7 @@ class ProductManagementPage extends StatelessWidget {
                                                 size: 20,
                                               ),
                                               const SizedBox(width: 8),
-                                              Text(category.name),
+                                              Text(category.nom),
                                             ],
                                           ),
                                         );
@@ -425,9 +437,9 @@ class ProductManagementPage extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(8),
                                           image: DecorationImage(
-                                            image: kIsWeb
-                                                ? MemoryImage(selectedImages[index] as Uint8List)
-                                                : FileImage(selectedImages[index] as File) as ImageProvider,
+                                            image: (selectedImages[index].startsWith('data:image'))
+                                                ? MemoryImage(base64Decode(selectedImages[index].split(',').last))
+                                                : NetworkImage(selectedImages[index]) as ImageProvider,
                                             fit: BoxFit.cover,
                                           ),
                                           boxShadow: [
@@ -628,9 +640,9 @@ class ProductCard extends StatelessWidget {
     final category = categoryController.categories
         .firstWhere((c) => c.id == product.categoryId, orElse: () => Category(
           id: '',
-          name: 'Non catégorisé',
+          nom: 'Non catégorisé',
           description: '',
-          imageUrl: '',
+          image: '',
           createdAt: DateTime.now(),
         ));
 
@@ -662,7 +674,11 @@ class ProductCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                       image: DecorationImage(
-                        image: NetworkImage(product.imageUrls.first),
+                        image: (product.imageUrls.isNotEmpty)
+                            ? (product.imageUrls.first.startsWith('data:image'))
+                                ? MemoryImage(base64Decode(product.imageUrls.first.split(',').last))
+                                : NetworkImage(product.imageUrls.first) as ImageProvider
+                            : const AssetImage('assets/icons/placeholder.png'),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -690,7 +706,7 @@ class ProductCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              category.name,
+                              category.nom,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textDark.withOpacity(0.6),
@@ -749,8 +765,8 @@ class ProductCard extends StatelessWidget {
               leading: Icon(Icons.edit, color: AppTheme.primaryBrown),
               title: const Text('Modifier'),
               onTap: () {
-                // TODO: Implémenter la modification
                 Get.back();
+                _showEditProductDialog(context, product);
               },
             ),
             ListTile(
@@ -763,6 +779,394 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditProductDialog(BuildContext context, Product product) {
+    final nameController = TextEditingController(text: product.name);
+    final descriptionController = TextEditingController(text: product.description);
+    final priceController = TextEditingController(text: product.price.toString());
+    String? selectedCategoryId = product.categoryId;
+    final RxList<dynamic> selectedImages = RxList<dynamic>.from(product.imageUrls);
+    final ImageService imageService = ImageService();
+    final CategoryController categoryController = Get.find<CategoryController>();
+    final RxBool isLoading = false.obs;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Obx(() => Stack(
+          children: [
+            AbsorbPointer(
+              absorbing: isLoading.value,
+              child: Opacity(
+                opacity: isLoading.value ? 0.5 : 1,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Modifier le produit',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBrown,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Nom',
+                          labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: Icon(Icons.shopping_bag_outlined, color: AppTheme.primaryBrown),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: descriptionController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: Icon(Icons.description_outlined, color: AppTheme.primaryBrown),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: priceController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Prix',
+                          labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: Icon(Icons.attach_money, color: AppTheme.primaryBrown),
+                          suffixText: 'TND',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Obx(
+                        () => categoryController.isLoading.value
+                            ? const Center(child: CircularProgressIndicator())
+                            : DropdownButtonFormField<String>(
+                                value: selectedCategoryId,
+                                items: categoryController.categories.map((Category category) {
+                                  return DropdownMenuItem(
+                                    value: category.id,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.category_outlined,
+                                          color: AppTheme.primaryBrown,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(category.nom),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? value) {
+                                  selectedCategoryId = value;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Catégorie',
+                                  labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.category_outlined, color: AppTheme.primaryBrown),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Images du produit',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryBrown,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Obx(() => selectedImages.isNotEmpty
+                          ? Container(
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppTheme.primaryBrown.withOpacity(0.3),
+                                  style: BorderStyle.solid,
+                                  width: 1,
+                                ),
+                              ),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: selectedImages.length,
+                                padding: const EdgeInsets.all(8),
+                                itemBuilder: (context, index) {
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.only(right: 8),
+                                        width: 100,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          image: DecorationImage(
+                                            image: (selectedImages[index].startsWith('data:image'))
+                                                ? MemoryImage(base64Decode(selectedImages[index].split(',').last))
+                                                : NetworkImage(selectedImages[index]) as ImageProvider,
+                                            fit: BoxFit.cover,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.1),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 8,
+                                        top: 0,
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: IconButton(
+                                            icon: const Icon(Icons.close, size: 20, color: Colors.red),
+                                            onPressed: () => selectedImages.removeAt(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 24,
+                                              minHeight: 24,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            )
+                          : Container(
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppTheme.primaryBrown.withOpacity(0.3),
+                                  style: BorderStyle.solid,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_photo_alternate_outlined,
+                                      size: 40,
+                                      color: AppTheme.primaryBrown.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Aucune image sélectionnée',
+                                      style: TextStyle(
+                                        color: AppTheme.textDark.withOpacity(0.5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await imageService.showImagePickerDialog(
+                            context,
+                            (dynamic image) {
+                              selectedImages.add(image);
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: const Text('Ajouter des images'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBrown,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Get.back(),
+                            child: Text(
+                              'Annuler',
+                              style: TextStyle(
+                                color: AppTheme.primaryBrown,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: () async {
+                              if (nameController.text.isEmpty) {
+                                Get.snackbar(
+                                  'Attention',
+                                  'Le nom du produit est obligatoire',
+                                  backgroundColor: Colors.orange.shade100,
+                                  colorText: Colors.orange.shade900,
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              if (descriptionController.text.isEmpty) {
+                                Get.snackbar(
+                                  'Attention',
+                                  'La description est obligatoire',
+                                  backgroundColor: Colors.orange.shade100,
+                                  colorText: Colors.orange.shade900,
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              if (priceController.text.isEmpty) {
+                                Get.snackbar(
+                                  'Attention',
+                                  'Le prix est obligatoire',
+                                  backgroundColor: Colors.orange.shade100,
+                                  colorText: Colors.orange.shade900,
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              if (selectedCategoryId == null) {
+                                Get.snackbar(
+                                  'Attention',
+                                  'Veuillez sélectionner une catégorie',
+                                  backgroundColor: Colors.orange.shade100,
+                                  colorText: Colors.orange.shade900,
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              if (selectedImages.isEmpty) {
+                                Get.snackbar(
+                                  'Attention',
+                                  'Veuillez sélectionner au moins une image',
+                                  backgroundColor: Colors.orange.shade100,
+                                  colorText: Colors.orange.shade900,
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                                return;
+                              }
+                              isLoading.value = true;
+                              final imageUrls = await Future.wait(
+                                selectedImages.map((image) => imageService.uploadImage(image, 'products')),
+                              );
+                              await Get.find<ProductController>().updateProduct(
+                                Product(
+                                  id: product.id,
+                                  name: nameController.text,
+                                  description: descriptionController.text,
+                                  price: double.parse(priceController.text),
+                                  categoryId: selectedCategoryId!,
+                                  imageUrls: imageUrls.cast<String>(),
+                                  createdAt: product.createdAt,
+                                  isAvailable: product.isAvailable,
+                                  artisanId: product.artisanId,
+                                ),
+                              );
+                              isLoading.value = false;
+                              Get.back();
+                              Get.snackbar(
+                                'Succès',
+                                'Produit modifié avec succès',
+                                backgroundColor: Colors.green.shade100,
+                                colorText: Colors.green.shade800,
+                                snackPosition: SnackPosition.TOP,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryBrown,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Enregistrer'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (isLoading.value)
+              const Positioned.fill(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
+        )),
       ),
     );
   }

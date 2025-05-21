@@ -10,6 +10,7 @@ class CategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    print('CategoryController initialisé');
     fetchCategories();
   }
 
@@ -28,25 +29,26 @@ class CategoryController extends GetxController {
     }
   }
 
-  Future<void> addCategory(String name, String description, String? imageUrl) async {
+  Future<void> addCategory(String nom, String description, String? image) async {
     try {
       isLoading.value = true;
       final docRef = await _firestore.collection('categories').add({
-        'nom': name,
+        'nom': nom,
         'description': description,
-        'image': imageUrl,
+        'image': image,
         'createdAt': DateTime.now().toIso8601String(),
       });
 
       final newCategory = Category(
         id: docRef.id,
-        name: name,
+        nom: nom,
         description: description,
-        imageUrl: "test",
+        image: image,
         createdAt: DateTime.now(),
       );
-       print('category data: ${newCategory.toJson()}');
+      print('category data:  ${newCategory.toJson()}');
       categories.add(newCategory);
+      await fetchCategories();
       Get.snackbar('Succès', 'Catégorie ajoutée avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible d\'ajouter la catégorie');

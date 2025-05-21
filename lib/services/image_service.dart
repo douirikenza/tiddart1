@@ -1,16 +1,16 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
 class ImageService {
   final ImagePicker _picker = ImagePicker();
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final uuid = const Uuid();
 
   Future<dynamic> pickImage(ImageSource source) async {
@@ -44,80 +44,57 @@ class ImageService {
 
   Future<String?> uploadImage(dynamic imageData, String folder) async {
     try {
-      String fileName = '${uuid.v4()}.jpg';
-      final storageRef = _storage.ref().child('$folder/$fileName');
-      
-      UploadTask uploadTask;
       if (kIsWeb) {
+        // Pour le web, nous convertissons l'image en base64
         final Uint8List bytes = imageData as Uint8List;
         if (bytes.length > 5 * 1024 * 1024) {
           throw Exception('L\'image est trop volumineuse (max 5MB)');
         }
-        uploadTask = storageRef.putData(
-          bytes,
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
+        final base64Image = base64Encode(bytes);
+        return 'data:image/jpeg;base64,$base64Image';
       } else {
+        // Pour mobile/desktop, nous copions l'image dans le dossier de l'application
         final File imageFile = imageData as File;
         final fileSize = await imageFile.length();
         if (fileSize > 5 * 1024 * 1024) {
           throw Exception('L\'image est trop volumineuse (max 5MB)');
         }
-        uploadTask = storageRef.putFile(
-          imageFile,
-          SettableMetadata(
-            contentType: 'image/${path.extension(imageFile.path).substring(1)}',
-            customMetadata: {'picked-file-path': imageFile.path},
-          ),
-        );
-      }
 
-      // Gérer les erreurs pendant le téléchargement
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        switch (snapshot.state) {
-          case TaskState.running:
-            final progress = 100.0 * (snapshot.bytesTransferred / snapshot.totalBytes);
-            debugPrint('Progression du téléchargement : ${progress.toStringAsFixed(2)}%');
-            break;
-          case TaskState.error:
-            throw Exception('Erreur pendant le téléchargement');
-          default:
-            break;
+        // Créer le dossier s'il n'existe pas
+        final appDir = await getApplicationDocumentsDirectory();
+        final categoryDir = Directory('${appDir.path}/$folder');
+        if (!await categoryDir.exists()) {
+          await categoryDir.create(recursive: true);
         }
-      });
-      
-      final snapshot = await uploadTask.whenComplete(() {});
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+
+        // Copier l'image dans le dossier de l'application
+        final fileName = '${uuid.v4()}.jpg';
+        final savedImage = await imageFile.copy('${categoryDir.path}/$fileName');
+        
+        return savedImage.path;
+      }
     } catch (e) {
-      debugPrint('Erreur lors du téléchargement de l\'image: $e');
-      String errorMessage = 'Impossible de télécharger l\'image.';
+      debugPrint('Erreur lors du traitement de l\'image: $e');
+      String errorMessage = 'Impossible de traiter l\'image.';
       
       if (e.toString().contains('trop volumineuse')) {
-        errorMessage = 'L\'image est trop volumineuse (max 5MB)';
-      } else if (e is FirebaseException) {
-        switch (e.code) {
-          case 'storage/unauthorized':
-            errorMessage = 'Non autorisé à télécharger l\'image';
-            break;
-          case 'storage/canceled':
-            errorMessage = 'Téléchargement annulé';
-            break;
-          case 'storage/retry-limit-exceeded':
-            errorMessage = 'Problème de connexion, veuillez réessayer';
-            break;
-          default:
-            errorMessage = 'Erreur de téléchargement : ${e.message}';
-        }
+        errorMessage = 'L\'image est trop volumineuse (max 5 Mo). Veuillez choisir une image plus petite.';
       }
       
       Get.snackbar(
         'Erreur',
         errorMessage,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 8),
+        margin: const EdgeInsets.all(16),
+        icon: const Icon(Icons.error, color: Colors.white, size: 32),
+        titleText: const Text('Erreur', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)),
+        messageText: Text(
+          errorMessage,
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+        ),
       );
       return null;
     }

@@ -11,7 +11,7 @@ class AppBinding extends Bindings {
     Get.put(AuthController(), permanent: true);
     Get.put(FavoritesController(), permanent: true);
     Get.put(CartController(), permanent: true);
-    Get.put(ProductController());
+    Get.put(ProductController(), permanent: true);
     Get.put(ProfileController(), permanent: true);
   }
 } 

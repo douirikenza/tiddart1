@@ -10,25 +10,21 @@ class ProductController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    print('ProductController initialisé');
     fetchProducts();
   }
 
-  Future<void> fetchProducts({String? categoryId}) async {
+  Future<void> fetchProducts() async {
     try {
       isLoading.value = true;
-      Query query = _firestore.collection('products');
-      
-      if (categoryId != null) {
-        query = query.where('categoryId', isEqualTo: categoryId);
-      }
-
-      final QuerySnapshot snapshot = await query.get();
+      final QuerySnapshot snapshot = await _firestore.collection('products').get();
       products.value = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return Product.fromJson({'id': doc.id, ...data});
       }).toList();
     } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger les produits');
+      print('Erreur fetchProducts: $e');
+      Get.snackbar('Erreur', 'Impossible de charger les produits : $e');
     } finally {
       isLoading.value = false;
     }
@@ -68,6 +64,7 @@ class ProductController extends GetxController {
       );
 
       products.add(newProduct);
+      await fetchProducts();
       Get.snackbar('Succès', 'Produit ajouté avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible d\'ajouter le produit');
@@ -84,6 +81,7 @@ class ProductController extends GetxController {
       if (index != -1) {
         products[index] = product;
       }
+      await fetchProducts();
       Get.snackbar('Succès', 'Produit mis à jour avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible de mettre à jour le produit');

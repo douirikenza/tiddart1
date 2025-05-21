@@ -6,7 +6,7 @@ import '../routes/app_routes.dart';
 
 class CategoryProductsPage extends StatelessWidget {
   final String category;
-  final ProductController productController = Get.put(ProductController());
+  final ProductController productController = Get.find<ProductController>();
 
   CategoryProductsPage({Key? key, required this.category}) : super(key: key);
 
@@ -17,7 +17,7 @@ class CategoryProductsPage extends StatelessWidget {
         title: Text(category),
       ),
       body: FutureBuilder<void>(
-        future: productController.fetchProducts(categoryId: category),
+        future: productController.fetchProducts(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

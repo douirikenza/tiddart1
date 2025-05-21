@@ -181,7 +181,7 @@ class CategoryManagementPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -198,7 +198,7 @@ class CategoryManagementPage extends StatelessWidget {
                   color: AppTheme.primaryBrown,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
@@ -217,7 +217,7 @@ class CategoryManagementPage extends StatelessWidget {
                   prefixIcon: Icon(Icons.category_outlined, color: AppTheme.primaryBrown),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               TextField(
                 controller: descriptionController,
                 maxLines: 3,
@@ -237,7 +237,7 @@ class CategoryManagementPage extends StatelessWidget {
                   prefixIcon: Icon(Icons.description_outlined, color: AppTheme.primaryBrown),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               Text(
                 'Image de la catégorie',
                 style: TextStyle(
@@ -246,12 +246,12 @@ class CategoryManagementPage extends StatelessWidget {
                   color: AppTheme.primaryBrown,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Obx(() => selectedImage.value != null
                   ? Stack(
                       children: [
                         Container(
-                          height: 150,
+                          height: 160,
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
@@ -287,7 +287,7 @@ class CategoryManagementPage extends StatelessWidget {
                       ],
                     )
                   : Container(
-                      height: 150,
+                      height: 160,
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: Colors.grey.withOpacity(0.1),
@@ -306,7 +306,7 @@ class CategoryManagementPage extends StatelessWidget {
                             size: 48,
                             color: AppTheme.primaryBrown.withOpacity(0.5),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             'Ajouter une image',
                             style: TextStyle(
@@ -316,7 +316,7 @@ class CategoryManagementPage extends StatelessWidget {
                         ],
                       ),
                     )),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -342,7 +342,16 @@ class CategoryManagementPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 4),
+              const Text(
+                'Taille maximale de l\'image : 5 Mo',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -362,7 +371,6 @@ class CategoryManagementPage extends StatelessWidget {
                       if (nameController.text.isEmpty) {
                         Get.snackbar(
                           'Attention',
-
                           'Le nom de la catégorie est obligatoire',
                           backgroundColor: Colors.orange.shade100,
                           colorText: Colors.orange.shade900,
@@ -371,7 +379,7 @@ class CategoryManagementPage extends StatelessWidget {
                         return;
                       }
 
-                /*      if (selectedImage.value == null) {
+                      if (selectedImage.value == null) {
                         Get.snackbar(
                           'Attention',
                           'Veuillez sélectionner une image pour la catégorie',
@@ -380,21 +388,33 @@ class CategoryManagementPage extends StatelessWidget {
                           snackPosition: SnackPosition.TOP,
                         );
                         return;
-                      }*/
+                      }
 
-                    /*  try {
+                      try {
                         // Afficher un indicateur de chargement
                         final loadingOverlay = LoadingOverlay.show(
                           context,
                           'Création de la catégorie en cours...',
                         );
 
-                        final imageUrl = await imageService.uploadImage(
-                          selectedImage.value!,
-                          'categories',
-                        );
+                        try {
+                          final imageUrl = await imageService.uploadImage(
+                            selectedImage.value!,
+                            'categories',
+                          );
 
-                        if (imageUrl != null) {
+                          if (imageUrl == null) {
+                            loadingOverlay.dismiss();
+                            Get.snackbar(
+                              'Erreur',
+                              'Impossible de télécharger l\'image',
+                              backgroundColor: Colors.red.shade100,
+                              colorText: Colors.red.shade800,
+                              snackPosition: SnackPosition.TOP,
+                            );
+                            return;
+                          }
+
                           await controller.addCategory(
                             nameController.text,
                             descriptionController.text,
@@ -412,21 +432,28 @@ class CategoryManagementPage extends StatelessWidget {
                             colorText: Colors.green.shade800,
                             snackPosition: SnackPosition.TOP,
                           );
-                        } else {
-                          // Fermer l'indicateur de chargement
+                        } catch (e) {
                           loadingOverlay.dismiss();
+                          debugPrint('Erreur lors de l\'ajout de la catégorie: $e');
+                          Get.snackbar(
+                            'Erreur',
+                            'Une erreur est survenue lors de l\'ajout de la catégorie',
+                            backgroundColor: Colors.red.shade100,
+                            colorText: Colors.red.shade800,
+                            snackPosition: SnackPosition.TOP,
+                            duration: const Duration(seconds: 5),
+                          );
                         }
                       } catch (e) {
-                        debugPrint('Erreur lors de l\'ajout de la catégorie: $e');
+                        debugPrint('Erreur lors de l\'affichage du loading: $e');
                         Get.snackbar(
                           'Erreur',
-                          'Une erreur est survenue lors de l\'ajout de la catégorie',
+                          'Une erreur est survenue',
                           backgroundColor: Colors.red.shade100,
                           colorText: Colors.red.shade800,
                           snackPosition: SnackPosition.TOP,
-                          duration: const Duration(seconds: 5),
                         );
-                      }*/
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBrown,
@@ -485,11 +512,11 @@ class CategoryCard extends StatelessWidget {
               children: [
                 // Image de la catégorie
                 Container(
-                  height: 150,
+                  height: 300,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(category.imageUrl ??""),
+                      image: NetworkImage(category.image ??""),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -510,7 +537,7 @@ class CategoryCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          category.name,
+                          category.nom,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -614,7 +641,7 @@ class CategoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         title: const Text('Confirmer la suppression'),
-        content: Text('Voulez-vous vraiment supprimer la catégorie "${category.name}" ?'),
+        content: Text('Voulez-vous vraiment supprimer la catégorie "${category.nom}" ?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -646,13 +673,270 @@ class CategoryCard extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context, Category category) {
-    // TODO: Implémenter la modification de catégorie
-    Get.snackbar(
-      'Info',
-      'Fonctionnalité de modification à venir',
-      backgroundColor: Colors.blue.shade100,
-      colorText: Colors.blue.shade900,
-      snackPosition: SnackPosition.TOP,
+    final nameController = TextEditingController(text: category.nom);
+    final descriptionController = TextEditingController(text: category.description);
+    final Rx<dynamic> selectedImage = Rx<dynamic>(null);
+    final ImageService imageService = ImageService();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Modifier la catégorie',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryBrown,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: Icon(Icons.category_outlined, color: AppTheme.primaryBrown),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: AppTheme.primaryBrown),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppTheme.primaryBrown.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppTheme.primaryBrown, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: Icon(Icons.description_outlined, color: AppTheme.primaryBrown),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Image de la catégorie',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryBrown,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Obx(() => selectedImage.value != null
+                  ? Stack(
+                      children: [
+                        Container(
+                          height: 300,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(
+                              image: kIsWeb
+                                  ? MemoryImage(selectedImage.value as Uint8List)
+                                  : FileImage(selectedImage.value as File) as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              onPressed: () => selectedImage.value = null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : (category.image != null && category.image!.isNotEmpty)
+                      ? Container(
+                          height: 300,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(
+                              image: NetworkImage(category.image!),
+                              fit: BoxFit.cover,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          height: 300,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppTheme.primaryBrown.withOpacity(0.3),
+                              width: 2,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate_outlined,
+                                size: 48,
+                                color: AppTheme.primaryBrown.withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Ajouter une image',
+                                style: TextStyle(
+                                  color: AppTheme.primaryBrown.withOpacity(0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await imageService.showImagePickerDialog(
+                      context,
+                      (dynamic image) {
+                        selectedImage.value = image;
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.add_photo_alternate),
+                  label: Text(selectedImage.value == null
+                      ? 'Sélectionner une image'
+                      : 'Changer l\'image'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBrown,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Taille maximale de l\'image : 5 Mo',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text(
+                      'Annuler',
+                      style: TextStyle(
+                        color: AppTheme.primaryBrown,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (nameController.text.isEmpty) {
+                        Get.snackbar(
+                          'Attention',
+                          'Le nom de la catégorie est obligatoire',
+                          backgroundColor: Colors.orange.shade100,
+                          colorText: Colors.orange.shade900,
+                          snackPosition: SnackPosition.TOP,
+                        );
+                        return;
+                      }
+
+                      String? imageUrl = category.image;
+                      if (selectedImage.value != null) {
+                        imageUrl = await imageService.uploadImage(
+                          selectedImage.value,
+                          'categories',
+                        );
+                      }
+
+                      await Get.find<CategoryController>().updateCategory(
+                        Category(
+                          id: category.id,
+                          nom: nameController.text,
+                          description: descriptionController.text,
+                          image: imageUrl,
+                          createdAt: category.createdAt,
+                        ),
+                      );
+                      Get.back();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBrown,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Enregistrer'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 } 

@@ -22,16 +22,29 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    dynamic categoryIdValue = json['categoryId'];
+    String categoryIdString;
+    if (categoryIdValue is String) {
+      categoryIdString = categoryIdValue;
+    } else if (categoryIdValue != null && categoryIdValue.runtimeType.toString().contains('DocumentReference')) {
+      categoryIdString = categoryIdValue.id;
+    } else {
+      categoryIdString = '';
+    }
     return Product(
       id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      price: (json['price'] as num).toDouble(),
-      categoryId: json['categoryId'] as String,
-      imageUrls: List<String>.from(json['imageUrls'] as List),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      isAvailable: json['isAvailable'] as bool,
-      artisanId: json['artisanId'] as String,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      price: (json['price'] is int)
+          ? (json['price'] as int).toDouble()
+          : (json['price'] as num?)?.toDouble() ?? 0.0,
+      categoryId: categoryIdString,
+      imageUrls: (json['imageUrls'] is List)
+          ? List<String>.from(json['imageUrls'])
+          : <String>[],
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      isAvailable: json['isAvailable'] is bool ? json['isAvailable'] as bool : true,
+      artisanId: json['artisanId'] as String? ?? '',
     );
   }
 
