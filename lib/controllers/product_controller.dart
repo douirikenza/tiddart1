@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tiddart/controllers/auth_controller.dart';
 import '../models/product.dart';
 
 class ProductController extends GetxController {
@@ -10,21 +11,25 @@ class ProductController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print('ProductController initialisé');
     fetchProducts();
   }
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({String? categoryId}) async {
     try {
       isLoading.value = true;
-      final QuerySnapshot snapshot = await _firestore.collection('products').get();
+      Query query = _firestore.collection('products');
+      
+      if (categoryId != null) {
+        query = query.where('categoryId', isEqualTo: categoryId);
+      }
+
+      final QuerySnapshot snapshot = await query.get();
       products.value = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return Product.fromJson({'id': doc.id, ...data});
       }).toList();
     } catch (e) {
-      print('Erreur fetchProducts: $e');
-      Get.snackbar('Erreur', 'Impossible de charger les produits : $e');
+      Get.snackbar('Erreur', 'Impossible de charger les produits');
     } finally {
       isLoading.value = false;
     }
@@ -36,8 +41,17 @@ class ProductController extends GetxController {
     required double price,
     required String categoryId,
     required List<String> imageUrls,
-    required String artisanId,
   }) async {
+     final AuthController authController = Get.find<AuthController>(); 
+
+    final artisanId = authController.userId;  
+
+
+    // Check if ArtisanId exist or null
+    if (artisanId == null) {
+      Get.snackbar('Erreur', 'Artisan ID not available');
+      return;
+    }
     try {
       isLoading.value = true;
       final docRef = await _firestore.collection('products').add({
@@ -64,7 +78,6 @@ class ProductController extends GetxController {
       );
 
       products.add(newProduct);
-      await fetchProducts();
       Get.snackbar('Succès', 'Produit ajouté avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible d\'ajouter le produit');
@@ -81,7 +94,6 @@ class ProductController extends GetxController {
       if (index != -1) {
         products[index] = product;
       }
-      await fetchProducts();
       Get.snackbar('Succès', 'Produit mis à jour avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible de mettre à jour le produit');
@@ -131,4 +143,4 @@ class ProductController extends GetxController {
       isLoading.value = false;
     }
   }
-} 
+  }

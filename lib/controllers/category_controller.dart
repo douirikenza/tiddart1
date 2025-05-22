@@ -10,45 +10,49 @@ class CategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print('CategoryController initialisé');
     fetchCategories();
   }
 
   Future<void> fetchCategories() async {
-    try {
-      isLoading.value = true;
-      final QuerySnapshot snapshot = await _firestore.collection('categories').get();
-      categories.value = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return Category.fromJson({'id': doc.id, ...data});
-      }).toList();
-    } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger les catégories');
-    } finally {
-      isLoading.value = false;
-    }
+  try {
+    isLoading.value = true;
+    final snapshot = await _firestore.collection('categories').get();
+    categories.value = snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return Category.fromJson({
+        'id'         : doc.id,
+        'name'       : data['nom']         as String?,  
+        'description': data['description'] as String?,
+        'imageUrl'   : data['image']       as String?,  
+        'createdAt'  : data['createdAt']   as String?,  
+      });
+    }).toList();
+  } catch (e) {
+    Get.snackbar('Erreur', 'Impossible de charger les catégories');
+  } finally {
+    isLoading.value = false;
   }
+}
 
-  Future<void> addCategory(String nom, String description, String? image) async {
+  Future<void> addCategory(String name, String description, String imageUrl) async {
     try {
       isLoading.value = true;
       final docRef = await _firestore.collection('categories').add({
-        'nom': nom,
+        'nom': name,
         'description': description,
-        'image': image,
+        'image': imageUrl,
         'createdAt': DateTime.now().toIso8601String(),
       });
 
       final newCategory = Category(
         id: docRef.id,
-        nom: nom,
+        name: name,
         description: description,
-        image: image,
+        imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
-      print('category data:  ${newCategory.toJson()}');
+       print('category data: ${newCategory.toJson()}');
       categories.add(newCategory);
-      await fetchCategories();
       Get.snackbar('Succès', 'Catégorie ajoutée avec succès');
     } catch (e) {
       Get.snackbar('Erreur', 'Impossible d\'ajouter la catégorie');

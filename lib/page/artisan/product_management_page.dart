@@ -188,7 +188,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 }
                 final category = categoryController.categories[index - 1];
                 return _buildFilterTile(
-                  category.nom,
+                  category.name,
                   Icons.folder,
                   () {
                     productController.fetchProducts();
@@ -376,7 +376,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                                 size: 20,
                                               ),
                                               const SizedBox(width: 8),
-                                              Text(category.nom),
+                                              Text(category.name),
                                             ],
                                           ),
                                         );
@@ -565,7 +565,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                               price: double.parse(priceController.text),
                               categoryId: selectedCategoryId!,
                               imageUrls: imageUrls.cast<String>(),
-                              artisanId: 'current_artisan_id',
+                            
                             );
                             Get.back();
                             Get.snackbar(
@@ -640,9 +640,9 @@ class ProductCard extends StatelessWidget {
     final category = categoryController.categories
         .firstWhere((c) => c.id == product.categoryId, orElse: () => Category(
           id: '',
-          nom: 'Non catégorisé',
+          name: 'Non catégorisé',
           description: '',
-          image: '',
+          imageUrl: '',
           createdAt: DateTime.now(),
         ));
 
@@ -706,7 +706,7 @@ class ProductCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              category.nom,
+                              category.name,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textDark.withOpacity(0.6),
@@ -900,7 +900,7 @@ class ProductCard extends StatelessWidget {
                                           size: 20,
                                         ),
                                         const SizedBox(width: 8),
-                                        Text(category.nom),
+                                        Text(category.name),
                                       ],
                                     ),
                                   );

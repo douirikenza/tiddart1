@@ -11,7 +11,7 @@ class AuthController extends GetxController {
   
   final Rx<User?> firebaseUser = Rx<User?>(null);
   final RxBool isLoading = false.obs;
-  
+  String? userId;
   @override
   void onInit() {
     super.onInit();
@@ -23,6 +23,7 @@ class AuthController extends GetxController {
     if (user == null) {
       Get.offAllNamed(AppRoutes.welcome);
     } else {
+      userId = user.uid;
       // Charger les données du profil après la connexion
       final ProfileController profileController = Get.find<ProfileController>();
       await profileController.loadUserData();
@@ -41,6 +42,8 @@ class AuthController extends GetxController {
   Future<Map<String, dynamic>?> getCurrentUserData() async {
     try {
       if (firebaseUser.value != null) {
+        final uid = firebaseUser.value!.uid;
+        print('user UID: $uid');
         DocumentSnapshot doc = await _firestore
             .collection('users')
             .doc(firebaseUser.value!.uid)
@@ -50,7 +53,7 @@ class AuthController extends GetxController {
       return null;
     } catch (e) {
       print("Erreur lors de la récupération des données utilisateur: $e");
-      return null;
+     return null;
     }
   }
 
