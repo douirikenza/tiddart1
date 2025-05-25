@@ -29,8 +29,12 @@ class AuthController extends GetxController {
       await profileController.loadUserData();
       
       // Vérifier le rôle de l'utilisateur
-      bool isUserArtisan = await isArtisan();
-      if (isUserArtisan) {
+      var userData = await getCurrentUserData();
+      String? userRole = userData?['role'];
+
+      if (userRole == 'admin') {
+        Get.offAllNamed(AppRoutes.adminDashboard, arguments: user.uid);
+      } else if (userRole == 'artisan') {
         Get.offAllNamed(AppRoutes.artisanDashboard, arguments: user.uid);
       } else {
         Get.offAllNamed(AppRoutes.mainNavigation);

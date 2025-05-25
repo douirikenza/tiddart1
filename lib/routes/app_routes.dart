@@ -11,7 +11,6 @@ import '../page/signup_page.dart';
 import '../page/valid_code_page.dart';
 import '../page/profile_page.dart';
 import '../page/product_details_page.dart';
-
 import '../page/Product_categories_Page.dart';
 import '../page/category_selector_page.dart';
 import '../page/cosmetics_page.dart';
@@ -23,6 +22,9 @@ import '../page/welcome_page.dart';
 import '../page/artisan/category_management_page.dart';
 import '../page/artisan/product_management_page.dart';
 import '../page/artisan/artisan_dashboard_page.dart';
+import '../page/admin/admin_dashboard_page.dart';
+import '../page/admin/category_management_page.dart';
+import '../page/admin/artisan_management_page.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -47,6 +49,9 @@ class AppRoutes {
   static const String welcome = '/welcome';
   static const String productDetails = '/product-details';
   static const String artisanDashboard = '/artisan/dashboard';
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminCategoryManagement = '/admin/categories';
+  static const String adminArtisanManagement = '/admin/artisans';
   static const String categoryManagement = '/artisan/categories';
   static const String productManagement = '/artisan/products';
   static const String artisanProfile = '/artisan/profile';
@@ -59,8 +64,8 @@ class AppPages {
   static final routes = [
     GetPage(name: AppRoutes.login, page: () => const LoginPage()),
     GetPage(name: AppRoutes.signup, page: () => const SignUpPage()),
-    GetPage(name: AppRoutes.home, page: () => HomePage()), // 
-    GetPage(name: AppRoutes.cart, page: () => CartPage()), // 
+    GetPage(name: AppRoutes.home, page: () => HomePage()),
+    GetPage(name: AppRoutes.cart, page: () => CartPage()),
     GetPage(name: AppRoutes.favorites, page: () => FavoritesPage()),
     GetPage(name: AppRoutes.profile, page: () => ProfilePage()),
     GetPage(name: AppRoutes.chat, page: () => ChatPage(
@@ -86,6 +91,18 @@ class AppPages {
     GetPage(
       name: AppRoutes.artisanDashboard,
       page: () => ArtisanDashboardPage(artisanId: Get.arguments),
+    ),
+    GetPage(
+      name: AppRoutes.adminDashboard,
+      page: () => AdminDashboardPage(adminId: Get.arguments),
+    ),
+    GetPage(
+      name: AppRoutes.adminCategoryManagement,
+      page: () => AdminCategoryManagementPage(),
+    ),
+    GetPage(
+      name: AppRoutes.adminArtisanManagement,
+      page: () => AdminArtisanManagementPage(),
     ),
     GetPage(
       name: AppRoutes.categoryManagement,

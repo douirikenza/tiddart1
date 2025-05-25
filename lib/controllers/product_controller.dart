@@ -17,7 +17,15 @@ class ProductController extends GetxController {
   Future<void> fetchProducts({String? categoryId}) async {
     try {
       isLoading.value = true;
-      Query query = _firestore.collection('products');
+      final AuthController authController = Get.find<AuthController>();
+      final artisanId = authController.userId;
+
+      if (artisanId == null) {
+        Get.snackbar('Erreur', 'Artisan ID not available');
+        return;
+      }
+
+      Query query = _firestore.collection('products').where('artisanId', isEqualTo: artisanId);
       
       if (categoryId != null) {
         query = query.where('categoryId', isEqualTo: categoryId);
@@ -29,6 +37,7 @@ class ProductController extends GetxController {
         return Product.fromJson({'id': doc.id, ...data});
       }).toList();
     } catch (e) {
+      print('Erreur lors du chargement des produits: $e');
       Get.snackbar('Erreur', 'Impossible de charger les produits');
     } finally {
       isLoading.value = false;
@@ -86,16 +95,54 @@ class ProductController extends GetxController {
     }
   }
 
-  Future<void> updateProduct(Product product) async {
+  Future<void> updateProduct({
+    required String id,
+    required String name,
+    required String description,
+    required double price,
+    required String categoryId,
+    required List<String> imageUrls,
+  }) async {
     try {
       isLoading.value = true;
-      await _firestore.collection('products').doc(product.id).update(product.toJson());
-      final index = products.indexWhere((p) => p.id == product.id);
-      if (index != -1) {
-        products[index] = product;
+      final AuthController authController = Get.find<AuthController>();
+      final artisanId = authController.userId;
+
+      if (artisanId == null) {
+        Get.snackbar('Erreur', 'Artisan ID not available');
+        return;
       }
+
+      // Mettre à jour dans Firestore
+      await _firestore.collection('products').doc(id).update({
+        'name': name,
+        'description': description,
+        'price': price,
+        'categoryId': categoryId,
+        'imageUrls': imageUrls,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      // Mettre à jour dans la liste locale
+      final index = products.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        final updatedProduct = Product(
+          id: id,
+          name: name,
+          description: description,
+          price: price,
+          categoryId: categoryId,
+          imageUrls: imageUrls,
+          createdAt: products[index].createdAt,
+          isAvailable: products[index].isAvailable,
+          artisanId: artisanId,
+        );
+        products[index] = updatedProduct;
+      }
+
       Get.snackbar('Succès', 'Produit mis à jour avec succès');
     } catch (e) {
+      print('Erreur lors de la mise à jour du produit: $e');
       Get.snackbar('Erreur', 'Impossible de mettre à jour le produit');
     } finally {
       isLoading.value = false;

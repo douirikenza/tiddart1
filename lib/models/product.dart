@@ -22,14 +22,14 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    dynamic categoryIdValue = json['categoryId'];
-    String categoryIdString;
-    if (categoryIdValue is String) {
-      categoryIdString = categoryIdValue;
-    } else if (categoryIdValue != null && categoryIdValue.runtimeType.toString().contains('DocumentReference')) {
-      categoryIdString = categoryIdValue.id;
+    final categoryIdField = json['categoryId'];
+    String categoryId;
+    if (categoryIdField is String) {
+      categoryId = categoryIdField;
+    } else if (categoryIdField != null && categoryIdField.runtimeType.toString().contains('DocumentReference')) {
+      categoryId = categoryIdField.id;
     } else {
-      categoryIdString = '';
+      categoryId = '';
     }
     return Product(
       id: json['id'] as String,
@@ -38,7 +38,7 @@ class Product {
       price: (json['price'] is int)
           ? (json['price'] as int).toDouble()
           : (json['price'] as num?)?.toDouble() ?? 0.0,
-      categoryId: categoryIdString,
+      categoryId: categoryId,
       imageUrls: (json['imageUrls'] is List)
           ? List<String>.from(json['imageUrls'])
           : <String>[],

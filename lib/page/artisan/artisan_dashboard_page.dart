@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'artisan_chat_page.dart';
 import 'artisan_conversations_list.dart';
+import 'artisan_product_management_page.dart';
 
 class RevenueData {
   final String day;
@@ -117,7 +118,6 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
             stream: _messageController.getUnreadCount(widget.artisanId),
             builder: (context, snapshot) {
               final unreadCount = snapshot.data ?? 0;
-              
               return Stack(
                 children: [
                   Container(
@@ -205,90 +205,46 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppTheme.backgroundLight,
-                AppTheme.surfaceLight,
-              ],
-            ),
-          ),
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Stack(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 20),
-                        // En-tête avec statistiques étendues
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildAnimatedCard(
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _buildStatCard(
-                                      'Produits',
-                                      '12',
-                                      Icons.inventory,
-                                      AppTheme.primaryBrown,
-                                      '↑ 2 cette semaine',
-                                    ),
-                                    _buildStatCard(
-                                      'Commandes',
-                                      '5',
-                                      Icons.shopping_bag,
-                                      Colors.green,
-                                      '↑ 3 en attente',
-                                    ),
-                                    _buildStatCard(
-                                      'Ventes',
-                                      '1.2k TND',
-                                      Icons.attach_money,
-                                      Colors.orange,
-                                      '↑ 15% ce mois',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _buildRevenueChart(),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Actions rapides avec badges de notification
-                        _buildQuickActions(),
-                        const SizedBox(height: 24),
-                        // Section des dernières activités améliorée
-                        _buildLatestActivities(),
-                      ],
+      body: Center(
+        child: GestureDetector(
+          onTap: () => Get.to(() => ArtisanProductManagementPage()),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              width: 220,
+              height: 170,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inventory, color: AppTheme.primaryBrown, size: 40),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Gérer les produits',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryBrown,
                     ),
-                    if (_isLoading)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.3),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBrown),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Ajouter ou gérer vos produits',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textDark.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),
@@ -318,9 +274,6 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
                 Get.toNamed(AppRoutes.artisanProfile);
                 break;
               case 2:
-                Get.toNamed(AppRoutes.categoryManagement);
-                break;
-              case 3:
                 Get.toNamed(AppRoutes.productManagement);
                 break;
             }
@@ -339,607 +292,14 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
               icon: Icon(Icons.person),
               label: 'Profil',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.category),
-              label: 'Catégories',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.inventory),
-              label: 'Produits',
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildGlassmorphicCard({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.2),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1.5,
-              ),
-            ),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-    String trend,
-  ) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeOutQuart,
-      builder: (context, animationValue, child) {
-        return Transform.scale(
-          scale: animationValue,
-          child: _buildGlassmorphicCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                      shadows: [
-                        Shadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.textDark.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      trend,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAnimatedCard({required Widget child}) {
-    return Hero(
-      tag: UniqueKey(),
-      child: Card(
-        elevation: 8,
-        shadowColor: AppTheme.primaryBrown.withOpacity(0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.surfaceLight,
-                Colors.white,
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [
-                AppTheme.primaryBrown,
-                AppTheme.primaryBrown.withOpacity(0.7),
-              ],
-            ).createShader(bounds),
-            child: const Text(
-              'Actions Rapides',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _buildActionCardWithBadge(
-                context,
-                'Gérer les Catégories',
-                Icons.category,
-                'Ajoutez et gérez vos catégories de produits',
-                () => Get.toNamed(AppRoutes.categoryManagement),
-                Colors.blue,
-                '2',
-                0,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Gérer les Produits',
-                Icons.inventory,
-                'Ajoutez et gérez vos produits',
-                () => Get.toNamed(AppRoutes.productManagement),
-                AppTheme.primaryBrown,
-                '3',
-                1,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Commandes',
-                Icons.shopping_bag,
-                'Gérez vos commandes en cours',
-                () => _showFeatureComingSoon(context),
-                Colors.green,
-                '5',
-                2,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Statistiques',
-                Icons.analytics,
-                'Consultez vos statistiques de vente',
-                () => _showFeatureComingSoon(context),
-                Colors.orange,
-                '',
-                3,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionCardWithBadge(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String description,
-    VoidCallback onTap,
-    Color color,
-    String badgeCount,
-    int index,
-  ) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _cardHovered[index] = true),
-      onExit: (_) => setState(() => _cardHovered[index] = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()
-          ..translate(
-            0.0,
-            _cardHovered[index] ? -8.0 : 0.0,
-            0.0,
-          ),
-        child: Stack(
-          key: _cardKeys[index],
-          children: [
-            _buildGlassmorphicCard(
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withOpacity(0.2),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          icon,
-                          color: color,
-                          size: 36,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                          shadows: [
-                            Shadow(
-                              color: color.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textDark.withOpacity(0.7),
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (badgeCount.isNotEmpty)
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    badgeCount,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRevenueChart() {
-    return _buildGlassmorphicCard(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Revenus hebdomadaires',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBrown,
-                shadows: [
-                  Shadow(
-                    color: AppTheme.primaryBrown.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 200,
-              child: CustomPaint(
-                painter: ChartPainter(
-                  data: _chartData.map((e) => e.amount).toList(),
-                  labels: _chartData.map((e) => e.day).toList(),
-                  color: AppTheme.primaryBrown,
-                ),
-                size: const Size(double.infinity, 200),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLatestActivities() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: _buildAnimatedCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  color: AppTheme.primaryBrown,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Dernières Activités',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBrown,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildActivityItem(
-              'Nouvelle commande reçue',
-              'Il y a 2 heures',
-              Icons.notifications,
-              Colors.green,
-            ),
-            _buildDivider(),
-            _buildActivityItem(
-              'Produit ajouté : Tapis berbère',
-              'Il y a 5 heures',
-              Icons.add_circle,
-              Colors.blue,
-            ),
-            _buildDivider(),
-            _buildActivityItem(
-              'Commande #123 livrée',
-              'Il y a 1 jour',
-              Icons.check_circle,
-              Colors.orange,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Container(
-        height: 1,
-        color: AppTheme.primaryBrown.withOpacity(0.1),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(
-      String title, String time, IconData icon, Color color) {
-    return InkWell(
-      onTap: () {
-        // Animation de pulsation au toucher
-        Get.snackbar(
-          title,
-          time,
-          backgroundColor: color.withOpacity(0.1),
-          colorText: color,
-          borderRadius: 10,
-          margin: const EdgeInsets.all(10),
-          duration: const Duration(seconds: 2),
-          icon: Icon(icon, color: color),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
-                  Text(
-                    time,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textDark.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: color.withOpacity(0.5),
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showFeatureComingSoon(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          backgroundColor: AppTheme.surfaceLight,
-          title: Row(
-            children: [
-              Icon(
-                Icons.upcoming,
-                color: AppTheme.primaryBrown,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Fonctionnalité à venir',
-                style: TextStyle(
-                  color: AppTheme.primaryBrown,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Cette fonctionnalité sera bientôt disponible !',
-                style: TextStyle(
-                  color: AppTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Icon(
-                Icons.construction,
-                color: AppTheme.primaryBrown.withOpacity(0.5),
-                size: 48,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: TextStyle(
-                  color: AppTheme.primaryBrown,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  void _showAddProductDialog(BuildContext context) {
+    // Implementation of _showAddProductDialog method
   }
 }
 

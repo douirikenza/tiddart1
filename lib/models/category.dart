@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Category {
   final String id;
   final String name;
@@ -14,21 +16,29 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    DateTime createdAt;
+    final createdAtField = json['createdAt'];
+    if (createdAtField is Timestamp) {
+      createdAt = createdAtField.toDate();
+    } else if (createdAtField is String) {
+      createdAt = DateTime.tryParse(createdAtField) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now();
+    }
     return Category(
       id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      imageUrl: json['imageUrl'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+      createdAt: createdAt,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
       'description': description,
-      'imageUrl': imageUrl,
+      'image': imageUrl,
       'createdAt': createdAt.toIso8601String(),
     };
   }

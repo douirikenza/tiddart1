@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:tiddart/firebase_options.dart';
 import 'bindings/app_binding.dart';
 import 'routes/app_routes.dart';
+import 'controllers/category_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  Get.put(CategoryController(), permanent: true);
 
   runApp(const TiddartApp());
 }

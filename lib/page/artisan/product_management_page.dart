@@ -20,7 +20,7 @@ class ProductManagementPage extends StatefulWidget {
 
 class _ProductManagementPageState extends State<ProductManagementPage> {
   final ProductController productController = Get.find<ProductController>();
-  final CategoryController categoryController = Get.put(CategoryController());
+  final CategoryController categoryController = Get.find<CategoryController>();
   final ImageService imageService = ImageService();
 
   @override
@@ -216,6 +216,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   }
 
   void _showAddProductDialog(BuildContext context) {
+    // Réinitialisation à chaque ouverture
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final priceController = TextEditingController();
@@ -320,9 +321,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       // Sélecteur de catégorie
                       Obx(
                         () => categoryController.isLoading.value
-                            ? const Center(
-                                child: CircularProgressIndicator(),
-                              )
+                            ? const Center(child: CircularProgressIndicator())
                             : categoryController.categories.isEmpty
                                 ? Container(
                                     padding: const EdgeInsets.all(16),
@@ -343,7 +342,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Aucune catégorie disponible. Veuillez d\'abord créer une catégorie.',
+                                            'Aucune catégorie disponible. Veuillez contacter l\'admin pour en créer.',
                                             style: TextStyle(
                                               color: Colors.orange.shade900,
                                               fontSize: 14,
@@ -1120,17 +1119,12 @@ class ProductCard extends StatelessWidget {
                                 selectedImages.map((image) => imageService.uploadImage(image, 'products')),
                               );
                               await Get.find<ProductController>().updateProduct(
-                                Product(
-                                  id: product.id,
-                                  name: nameController.text,
-                                  description: descriptionController.text,
-                                  price: double.parse(priceController.text),
-                                  categoryId: selectedCategoryId!,
-                                  imageUrls: imageUrls.cast<String>(),
-                                  createdAt: product.createdAt,
-                                  isAvailable: product.isAvailable,
-                                  artisanId: product.artisanId,
-                                ),
+                                id: product.id,
+                                name: nameController.text,
+                                description: descriptionController.text,
+                                price: double.parse(priceController.text),
+                                categoryId: selectedCategoryId!,
+                                imageUrls: imageUrls.cast<String>(),
                               );
                               isLoading.value = false;
                               Get.back();
@@ -1203,4 +1197,4 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
-} 
+}         

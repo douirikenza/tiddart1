@@ -1,3 +1,6 @@
+// Ce fichier ne doit plus être accessible par les artisans. Supprime la route ou le bouton qui y mène dans le dashboard artisan et ailleurs si besoin.
+// Tu peux aussi supprimer le contenu ou afficher un message d'accès refusé si jamais la page est appelée par erreur.
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -10,7 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/loading_overlay.dart';
 
 class CategoryManagementPage extends StatelessWidget {
-  final CategoryController controller = Get.put(CategoryController());
+  final CategoryController controller = Get.find<CategoryController>();
   final ImageService imageService = ImageService();
 
   CategoryManagementPage({Key? key}) : super(key: key);
