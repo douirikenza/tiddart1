@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1094006570837",
+    "project_id": "tiddart-bad71",
+    "storage_bucket": "tiddart-bad71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094006570837:android:d1e4fc007d012cdb5239dc",
+        "android_client_info": {
+          "package_name": "com.itGate.tiddart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9GgoCRf6Q99WJk87G4M-jwA374SmNwjg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

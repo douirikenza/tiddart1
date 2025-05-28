@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "tiddart",
+			"path": "."
+		},
+		{
+			"name": "assets",
+			"path": "../../App1/tiddart/assets"
+		},
+		{
+			"name": "lib",
+			"path": "../../App1/tiddart/lib"
+		}
+	],
+	"settings": {}
+}
