@@ -6,7 +6,6 @@ import '../models/product_model.dart';
 import '../theme/app_theme.dart';
 import '../routes/app_routes.dart';
 import 'payment_choice_page.dart';
-import 'chat_page.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final ProductModel product;
@@ -176,30 +175,6 @@ class ProductDetailsPage extends StatelessWidget {
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Get.to(() => ChatPage(vendorName: product.artisan));
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      gradient: AppTheme.primaryGradient,
-                                      borderRadius: BorderRadius.circular(15),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.primaryBrown.withOpacity(0.2),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.chat_bubble_outline,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
                                   ),
                                 ),
                               ],

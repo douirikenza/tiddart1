@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'artisan_chat_page.dart';
 import 'artisan_conversations_list.dart';
 import 'artisan_product_management_page.dart';
+import 'category_products_page.dart';
 
 class RevenueData {
   final String day;
@@ -101,6 +102,10 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
 
   @override
   Widget build(BuildContext context) {
+    // TODO: Remplacer ces valeurs par des valeurs dynamiques si besoin
+    final int nbProduits = 0; // À remplacer par le vrai nombre de produits
+    final int nbCommandes = 0; // À remplacer par le vrai nombre de commandes
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
@@ -120,77 +125,52 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
               final unreadCount = snapshot.data ?? 0;
               return Stack(
                 children: [
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBrown.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.8, end: 1.0),
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: unreadCount > 0 ? value : 1.0,
-                            child: Icon(
-                              Icons.notifications_outlined,
-                              color: AppTheme.primaryBrown,
-                              size: 26,
-                            ),
-                          );
-                        },
-                      ),
-                      onPressed: () {
-                        Get.to(
-                          () => ArtisanConversationsList(artisanId: widget.artisanId),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 300),
+                  IconButton(
+                    icon: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.8, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.elasticOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: unreadCount > 0 ? value : 1.0,
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: AppTheme.primaryBrown,
+                            size: 26,
+                          ),
                         );
                       },
                     ),
+                    onPressed: () {
+                      Get.to(
+                        () => ArtisanConversationsList(artisanId: widget.artisanId),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 300),
+                      );
+                    },
                   ),
                   if (unreadCount > 0)
                     Positioned(
                       right: 8,
                       top: 8,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.5, end: 1.0),
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.red.withOpacity(0.3),
-                                    blurRadius: 6,
-                                    spreadRadius: 2,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                unreadCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                 ],
@@ -200,97 +180,157 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
           IconButton(
             icon: Icon(Icons.person, color: AppTheme.primaryBrown),
             onPressed: () {
-              Get.toNamed(AppRoutes.artisanProfile);
+              Get.to(() => CategoryProductsPage());
             },
           ),
         ],
       ),
-      body: Center(
-        child: GestureDetector(
-          onTap: () => Get.to(() => ArtisanProductManagementPage()),
-          child: Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Container(
-              width: 220,
-              height: 170,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inventory, color: AppTheme.primaryBrown, size: 40),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Gérer les produits',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBrown,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Text(
+                'Bienvenue sur votre espace artisan',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: AppTheme.primaryBrown,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Ajouter ou gérer vos produits',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textDark.withOpacity(0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStatCard('Produits', Icons.inventory_2, nbProduits, Colors.blue.shade50, Colors.blue),
+                _buildStatCard('Commandes', Icons.shopping_cart, nbCommandes, Colors.orange.shade50, Colors.orange),
+                _buildStatCard('Statistiques', Icons.bar_chart, '', Colors.green.shade50, Colors.green),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Text(
+                'Gestion',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: AppTheme.primaryBrown,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildActionCard(
+                  'Mes produits',
+                  Icons.inventory_2,
+                  Colors.blue.shade50,
+                  Colors.blue,
+                  () => Get.to(() => ArtisanProductManagementPage()),
+                ),
+                _buildActionCard(
+                  'Mes commandes',
+                  Icons.shopping_cart,
+                  Colors.orange.shade50,
+                  Colors.orange,
+                  () {/* TODO: Navigation vers la page de gestion des commandes */},
+                ),
+                _buildActionCard(
+                  'Statistiques',
+                  Icons.bar_chart,
+                  Colors.green.shade50,
+                  Colors.green,
+                  () {/* TODO: Navigation vers la page de statistiques */},
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+          ],
         ),
       ),
-      bottomNavigationBar: Container(
+    );
+  }
+
+  Widget _buildStatCard(String label, IconData icon, dynamic value, Color bgColor, Color iconColor) {
+    return Container(
+      width: 110,
+      height: 90,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor.withOpacity(0.2),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: 6),
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: iconColor,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: iconColor.withOpacity(0.8),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(String label, IconData icon, Color bgColor, Color iconColor, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 110,
+        height: 110,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+              color: bgColor.withOpacity(0.2),
+              blurRadius: 8,
+              offset: Offset(0, 4),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            switch (index) {
-              case 0:
-                // Déjà sur le dashboard
-                break;
-              case 1:
-                Get.toNamed(AppRoutes.artisanProfile);
-                break;
-              case 2:
-                Get.toNamed(AppRoutes.productManagement);
-                break;
-            }
-          },
-          selectedItemColor: AppTheme.primaryBrown,
-          unselectedItemColor: Colors.grey,
-          backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profil',
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 36),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: TextStyle(
+                color: iconColor.withOpacity(0.8),
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

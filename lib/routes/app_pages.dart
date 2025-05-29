@@ -4,7 +4,7 @@ import '../page/artisan/artisan_profile_page.dart';
 import '../page/artisan/category_management_page.dart';
 import '../page/artisan/product_management_page.dart';
 import '../page/artisan/order_statistics_page.dart';
-import '../page/artisan/artisan_chat_page.dart';
+import '../page/artisan/category_products_page.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -29,17 +29,9 @@ class AppPages {
       name: AppRoutes.orderStatistics,
       page: () => OrderStatisticsPage(),
     ),
-   GetPage(
-  name: AppRoutes.artisanChat,
-  page: () {
-    final args = Get.arguments as Map<String, dynamic>;
-    return ArtisanChatPage(
-      artisanId: args['artisanId'],
-      clientId: args['clientId'],
-      clientName: args['clientName'],
-    );
-  },
-),
-
+    GetPage(
+      name: AppRoutes.artisanCategoryProducts,
+      page: () => CategoryProductsPage(),
+    ),
   ];
 } 

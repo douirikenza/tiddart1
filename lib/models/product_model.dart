@@ -21,30 +21,30 @@ class ProductModel {
   factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
     // Traiter le prix
     String priceStr = map['price']?.toString() ?? '0';
-    // Supprimer 'TND' et les espaces s'ils existent
     priceStr = priceStr.replaceAll('TND', '').trim();
-    
-    // Traitement spécial pour les grands nombres (ex: 1.234,56)
     if (priceStr.contains('.') && priceStr.contains(',')) {
-      // Si le point vient avant la virgule, c'est un séparateur de milliers
       if (priceStr.indexOf('.') < priceStr.indexOf(',')) {
         priceStr = priceStr.replaceAll('.', '').replaceAll(',', '.');
       }
     } else {
-      // Cas normal : remplacer la virgule par un point
       priceStr = priceStr.replaceAll(',', '.');
     }
-    
-    // Convertir en double pour normaliser
     double priceValue = double.tryParse(priceStr) ?? 0.0;
-    // Reformater avec 2 décimales et TND
     String formattedPrice = '${priceValue.toStringAsFixed(2)} TND';
-    
+
+    // Prendre la première image de imageUrls si elle existe
+    String imageUrl = '';
+    if (map['imageUrls'] != null && map['imageUrls'] is List && (map['imageUrls'] as List).isNotEmpty) {
+      imageUrl = (map['imageUrls'] as List).first;
+    } else if (map['image'] != null) {
+      imageUrl = map['image'];
+    }
+
     return ProductModel(
       id: documentId,
       name: map['name'] ?? '',
       price: formattedPrice,
-      image: map['image'] ?? '',
+      image: imageUrl,
       description: map['description'] ?? '',
       artisan: map['artisan'] ?? '',
       category: map['category'] ?? '',

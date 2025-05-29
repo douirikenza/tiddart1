@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../theme/app_theme.dart';
 import 'chat_page.dart';
+import '../controllers/auth_controller.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -14,11 +15,13 @@ class _ChatListPageState extends State<ChatListPage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final AuthController _authController = Get.find<AuthController>();
 
   // Liste de test des conversations
   final List<Map<String, dynamic>> _allConversations = [
     {
       'vendorName': 'Artisan Fatma',
+      'vendorId': 'vendor_1',
       'lastMessage': 'Bonjour, est-ce que le produit est disponible ?',
       'time': '14:30',
       'unread': 2,
@@ -26,6 +29,7 @@ class _ChatListPageState extends State<ChatListPage> {
     },
     {
       'vendorName': 'Artisan Amira',
+      'vendorId': 'vendor_2',
       'lastMessage': 'Merci pour votre commande !',
       'time': '12:45',
       'unread': 0,
@@ -33,6 +37,7 @@ class _ChatListPageState extends State<ChatListPage> {
     },
     {
       'vendorName': 'Artisan Khadija',
+      'vendorId': 'vendor_3',
       'lastMessage': 'Le produit sera disponible la semaine prochaine',
       'time': '10:15',
       'unread': 1,
@@ -235,9 +240,22 @@ class _ChatListPageState extends State<ChatListPage> {
         ),
         child: InkWell(
           onTap: () {
-            Get.to(() => ChatPage(
-              vendorName: conversation['vendorName'],
-            ));
+            final currentUser = _authController.firebaseUser.value;
+            if (currentUser != null) {
+              Get.to(() => ChatPage(
+                currentUserId: currentUser.uid,
+                otherUserId: conversation['vendorId'] ?? 'unknown', // TODO: Add vendorId to conversation data
+                otherUserName: conversation['vendorName'],
+              ));
+            } else {
+              Get.snackbar(
+                'Erreur',
+                'Vous devez être connecté pour accéder aux messages',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.red.shade100,
+                colorText: Colors.brown,
+              );
+            }
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(

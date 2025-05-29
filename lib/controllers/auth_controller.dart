@@ -31,10 +31,34 @@ class AuthController extends GetxController {
       // Vérifier le rôle de l'utilisateur
       var userData = await getCurrentUserData();
       String? userRole = userData?['role'];
+      bool isApproved = userData?['isApproved'] ?? false;
 
       if (userRole == 'admin') {
         Get.offAllNamed(AppRoutes.adminDashboard, arguments: user.uid);
       } else if (userRole == 'artisan') {
+        if (!isApproved) {
+          print("eeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
+          // Afficher d'abord le snackbar
+          Get.snackbar(
+            "Compte en attente",
+            "Votre compte est en attente d'approbation par l'administrateur",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange.shade100,
+            colorText: Colors.brown,
+            duration: const Duration(seconds: 5),
+            margin: const EdgeInsets.all(16),
+            borderRadius: 10,
+            isDismissible: true,
+            forwardAnimationCurve: Curves.easeOutBack,
+          );
+          
+          // Attendre un court instant pour que le snackbar s'affiche
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Puis déconnecter l'utilisateur
+          await logout();
+          return;
+        }
         Get.offAllNamed(AppRoutes.artisanDashboard, arguments: user.uid);
       } else {
         Get.offAllNamed(AppRoutes.mainNavigation);

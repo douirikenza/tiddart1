@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:tiddart/page/cart_page.dart';
-import '../page/chat_page.dart';
 import '../page/favorites_page.dart';
 import '../page/home_page.dart';
 import '../page/login_page.dart';
@@ -34,7 +33,6 @@ class AppRoutes {
   static const String cart = '/cart';
   static const String favorites = '/favorites';
   static const String profile = '/profile';
-  static const String chat = '/chat';
   static const String promotions = '/promotions';
   static const String mainNavigation = '/mainNavigation';
   static const String paymentPage = '/paymentPage';
@@ -56,8 +54,8 @@ class AppRoutes {
   static const String productManagement = '/artisan/products';
   static const String artisanProfile = '/artisan/profile';
   static const String orderStatistics = '/artisan/statistics';
-  static const String artisanChat = '/artisan/chat';
   static const String forgotPassword = '/forgot-password';
+  static const String artisanCategoryProducts = '/artisan/category-products';
 }
 
 class AppPages {
@@ -68,9 +66,6 @@ class AppPages {
     GetPage(name: AppRoutes.cart, page: () => CartPage()),
     GetPage(name: AppRoutes.favorites, page: () => FavoritesPage()),
     GetPage(name: AppRoutes.profile, page: () => ProfilePage()),
-    GetPage(name: AppRoutes.chat, page: () => ChatPage(
-      vendorName: Get.arguments['vendorName'] ?? 'Vendeur',
-    )),
     GetPage(name: AppRoutes.mainNavigation, page: () => MainNavigation()),
     GetPage(name: AppRoutes.promotions, page: () => PromotionsPage()),
     GetPage(name: AppRoutes.pswdOubliePage, page: () => PswdOubliePage()),

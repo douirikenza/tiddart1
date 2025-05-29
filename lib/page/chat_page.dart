@@ -5,23 +5,30 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'dart:io';
 import 'dart:html' as html;
 import '../theme/app_theme.dart';
+import 'package:uuid/uuid.dart';
+import '../models/message.dart';
+import '../services/message_service.dart';
 
 class ChatPage extends StatefulWidget {
-  final String vendorName;
-  
+  final String currentUserId;
+  final String otherUserId;
+  final String otherUserName;
+
   const ChatPage({
-    super.key,
-    required this.vendorName,
-  });
+    Key? key,
+    required this.currentUserId,
+    required this.otherUserId,
+    required this.otherUserName,
+  }) : super(key: key);
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  _ChatPageState createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
+  final MessageService _messageService = MessageService();
   final TextEditingController _messageController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  final List<Map<String, dynamic>> _messages = [];
+  final ScrollController _scrollController = ScrollController();
   bool _showEmojiPicker = false;
   bool _isComposing = false;
   final ImagePicker _picker = ImagePicker();
@@ -39,11 +46,9 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        setState(() {
-          _showEmojiPicker = false;
-        });
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        _messageService.markMessagesAsRead(widget.currentUserId, widget.otherUserId);
       }
     });
   }
@@ -51,7 +56,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     _messageController.dispose();
-    _focusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -64,11 +69,6 @@ class _ChatPageState extends State<ChatPage> {
   void _toggleEmojiPicker() {
     setState(() {
       _showEmojiPicker = !_showEmojiPicker;
-      if (_showEmojiPicker) {
-        _focusNode.unfocus();
-      } else {
-        _focusNode.requestFocus();
-      }
     });
   }
 
@@ -80,12 +80,12 @@ class _ChatPageState extends State<ChatPage> {
       reader.readAsDataUrl(html.File([await image.readAsBytes()], image.name));
       reader.onLoad.listen((event) {
         setState(() {
-          _messages.add({
-            'type': 'image',
-            'content': reader.result as String,
-            'isMe': true,
-            'time': DateTime.now(),
-          });
+          _messageService.sendImageMessage(
+            widget.currentUserId,
+            widget.otherUserId,
+            reader.result as String,
+            DateTime.now(),
+          );
         });
       });
     }
@@ -155,19 +155,19 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isNotEmpty) {
-      setState(() {
-        _messages.add({
-          'type': 'text',
-          'content': _messageController.text,
-          'isMe': true,
-          'time': DateTime.now(),
-        });
-        _messageController.clear();
-        _isComposing = false;
-      });
-    }
+  void _sendMessage() async {
+    if (_messageController.text.trim().isEmpty) return;
+
+    final message = Message(
+      id: Uuid().v4(),
+      senderId: widget.currentUserId,
+      receiverId: widget.otherUserId,
+      content: _messageController.text.trim(),
+      timestamp: DateTime.now(),
+    );
+
+    await _messageService.sendMessage(message);
+    _messageController.clear();
   }
 
   @override
@@ -182,7 +182,7 @@ class _ChatPageState extends State<ChatPage> {
             CircleAvatar(
               backgroundColor: AppTheme.primaryBrown.withOpacity(0.1),
               child: Text(
-                widget.vendorName[0],
+                widget.otherUserName[0],
                 style: TextStyle(
                   color: AppTheme.primaryBrown,
                   fontWeight: FontWeight.bold,
@@ -194,7 +194,7 @@ class _ChatPageState extends State<ChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.vendorName,
+                  widget.otherUserName,
                   style: TextStyle(
                     color: AppTheme.primaryBrown,
                     fontSize: 16,
@@ -226,39 +226,47 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return Align(
-                  alignment: message['isMe'] ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: message['type'] == 'text' 
-                      ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
-                      : const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: message['isMe'] ? AppTheme.primaryBrown : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: message['type'] == 'text'
-                      ? Text(
-                          message['content'],
+            child: StreamBuilder<List<Message>>(
+              stream: _messageService.getMessagesBetweenUsers(
+                widget.currentUserId,
+                widget.otherUserId,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Une erreur est survenue'));
+                }
+
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final messages = snapshot.data!;
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isMe = message.senderId == widget.currentUserId;
+
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isMe ? Colors.blue : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          message.content,
                           style: TextStyle(
-                            color: message['isMe'] ? Colors.white : Colors.black87,
-                          ),
-                        )
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.network(
-                            message['content'],
-                            width: 200,
-                            height: 200,
-                            fit: BoxFit.cover,
+                            color: isMe ? Colors.white : Colors.black,
                           ),
                         ),
-                  ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -298,11 +306,11 @@ class _ChatPageState extends State<ChatPage> {
                       Expanded(
                         child: TextField(
                           controller: _messageController,
-                          focusNode: _focusNode,
                           decoration: InputDecoration(
-                            hintText: 'Écrivez votre message ici...',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            border: InputBorder.none,
+                            hintText: 'Écrivez votre message...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
                           ),
                           onChanged: (text) {
                             setState(() {
